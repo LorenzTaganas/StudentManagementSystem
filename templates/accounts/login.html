@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+
+{% block title %}Login - SGMS{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 500px; margin: 3rem auto;">
+    <div class="card-header text-center">
+        <h2>Login to SGMS</h2>
+        <p>Enter your credentials to access your account</p>
+    </div>
+    <div class="card-body">
+        <form method="post" id="loginForm" novalidate>
+            {% csrf_token %}
+            
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" 
+                       id="username" 
+                       name="username" 
+                       class="form-control" 
+                       required 
+                       autofocus
+                       placeholder="Enter your username">
+                <span class="error-message" id="username_error"></span>
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" 
+                       id="password" 
+                       name="password" 
+                       class="form-control" 
+                       required
+                       placeholder="Enter your password">
+                <span class="error-message" id="password_error"></span>
+            </div>
+            
+            <button type="submit" class="btn-primary" style="width: 100%;">Login</button>
+        </form>
+        
+        <div class="text-center mt-3">
+            <p>Don't have an account? <a href="{% url 'accounts:register' %}">Register here</a></p>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('loginForm');
+    const usernameInput = document.getElementById('username');
+    const passwordInput = document.getElementById('password');
+    const usernameError = document.getElementById('username_error');
+    const passwordError = document.getElementById('password_error');
+
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        let isValid = true;
+
+        // Clear previous errors
+        usernameError.textContent = '';
+        usernameError.style.display = 'none';
+        passwordError.textContent = '';
+        passwordError.style.display = 'none';
+        usernameInput.classList.remove('error');
+        passwordInput.classList.remove('error');
+
+        // Validate username
+        if (!usernameInput.value.trim()) {
+            usernameError.textContent = 'Username is required';
+            usernameError.style.display = 'block';
+            usernameInput.classList.add('error');
+            isValid = false;
+        }
+
+        // Validate password
+        if (!passwordInput.value) {
+            passwordError.textContent = 'Password is required';
+            passwordError.style.display = 'block';
+            passwordInput.classList.add('error');
+            isValid = false;
+        }
+
+        // Submit form if valid
+        if (isValid) {
+            form.submit();
+        }
+    });
+
+    // Clear error when user starts typing
+    usernameInput.addEventListener('input', function() {
+        if (this.value.trim()) {
+            usernameError.style.display = 'none';
+            this.classList.remove('error');
+        }
+    });
+
+    passwordInput.addEventListener('input', function() {
+        if (this.value) {
+            passwordError.style.display = 'none';
+            this.classList.remove('error');
+        }
+    });
+});
+</script>
+{% endblock %}

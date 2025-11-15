@@ -1,0 +1,350 @@
+{% extends 'base.html' %}
+
+{% block title %}My Grades - SGMS{% endblock %}
+
+{% block extra_css %}
+<style>
+.back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #667eea;
+    text-decoration: none;
+    margin-bottom: 1rem;
+    font-size: 0.95rem;
+}
+
+.back-link:hover {
+    color: #5568d3;
+}
+
+.grades-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 2rem;
+    border-radius: 10px;
+    margin-bottom: 2rem;
+}
+
+.grades-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+}
+
+.stat-box {
+    text-align: center;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+}
+
+.stat-label {
+    font-size: 0.875rem;
+    opacity: 0.9;
+    margin-bottom: 0.5rem;
+}
+
+.stat-number {
+    font-size: 2rem;
+    font-weight: 700;
+}
+
+.grade-card {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    transition: all 0.3s;
+}
+
+.grade-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+}
+
+.grade-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #f3f4f6;
+}
+
+.subject-info h3 {
+    margin: 0;
+    color: #374151;
+    font-size: 1.25rem;
+}
+
+.subject-meta {
+    display: flex;
+    gap: 1rem;
+    margin-top: 0.5rem;
+    font-size: 0.875rem;
+    color: #6b7280;
+}
+
+.grade-badge {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #667eea;
+}
+
+.grade-details {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.grade-item {
+    text-align: center;
+    padding: 0.75rem;
+    background: #f9fafb;
+    border-radius: 6px;
+}
+
+.grade-item-label {
+    font-size: 0.75rem;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.25rem;
+}
+
+.grade-item-value {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #374151;
+}
+
+.grade-item-value.highlight {
+    font-size: 1.5rem;
+    color: #667eea;
+}
+
+.instructor-remarks {
+    background: #fffbeb;
+    border-left: 4px solid #f59e0b;
+    padding: 1rem;
+    margin-top: 1rem;
+    border-radius: 4px;
+}
+
+.remarks-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 600;
+    color: #92400e;
+    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
+}
+
+.remarks-content {
+    color: #78350f;
+    line-height: 1.6;
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.status-passed {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.status-failed {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.status-incomplete {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: #6b7280;
+}
+
+.empty-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+}
+
+.no-remarks {
+    color: #9ca3af;
+    font-style: italic;
+    font-size: 0.875rem;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<a href="{% url 'accounts:student_dashboard' %}" class="back-link">
+    ← Back to Dashboard
+</a>
+
+<div class="grades-header">
+    <h1 style="margin: 0;">My Academic Grades</h1>
+    <p style="margin: 0.5rem 0 0 0; opacity: 0.9;">Complete grade report with instructor feedback</p>
+    
+    <div class="grades-stats">
+        <div class="stat-box">
+            <div class="stat-label">Current GPA</div>
+            <div class="stat-number">{{ gpa|floatformat:2 }}</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-label">Total Subjects</div>
+            <div class="stat-number">{{ total_subjects }}</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-label">Passed</div>
+            <div class="stat-number" style="color: #10b981;">{{ passed }}</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-label">Failed</div>
+            <div class="stat-number" style="color: #ef4444;">{{ failed }}</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-label">Incomplete</div>
+            <div class="stat-number" style="color: #f59e0b;">{{ incomplete }}</div>
+        </div>
+    </div>
+</div>
+
+{% if grades %}
+    {% for grade in grades %}
+    <div class="grade-card">
+        <div class="grade-card-header">
+            <div class="subject-info">
+                <h3>{{ grade.enrollment.subject.code }} - {{ grade.enrollment.subject.name }}</h3>
+                <div class="subject-meta">
+                    <span>{{ grade.enrollment.subject.course.code }}</span>
+                    <span>• {{ grade.enrollment.subject.units }} units</span>
+                    <span>• {{ grade.enrollment.subject.get_semester_display }}</span>
+                    <span>• Year {{ grade.enrollment.subject.year_level }}</span>
+                    <span>• {{ grade.enrollment.subject.instructor.get_full_name|default:"No instructor" }}</span>
+                </div>
+            </div>
+            <div style="text-align: right;">
+                {% if grade.letter_grade %}
+                    <div class="grade-badge">{{ grade.letter_grade }}</div>
+                    {% if grade.letter_grade != '5.00' %}
+                        <span class="status-badge status-passed">Passed</span>
+                    {% else %}
+                        <span class="status-badge status-failed">Failed</span>
+                    {% endif %}
+                {% else %}
+                    <span class="status-badge status-incomplete">Incomplete</span>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="grade-details">
+            <div class="grade-item">
+                <div class="grade-item-label">Prelim ({{ grade.prelim_weight }}%)</div>
+                <div class="grade-item-value">{{ grade.prelim_grade|default:"-" }}</div>
+            </div>
+            <div class="grade-item">
+                <div class="grade-item-label">Midterm ({{ grade.midterm_weight }}%)</div>
+                <div class="grade-item-value">{{ grade.midterm_grade|default:"-" }}</div>
+            </div>
+            <div class="grade-item">
+                <div class="grade-item-label">Final ({{ grade.final_weight }}%)</div>
+                <div class="grade-item-value">{{ grade.final_grade|default:"-" }}</div>
+            </div>
+            <div class="grade-item" style="background: #eff6ff;">
+                <div class="grade-item-label">Weighted Average</div>
+                <div class="grade-item-value highlight">{{ grade.weighted_average|default:"-" }}</div>
+            </div>
+            <div class="grade-item" style="background: #eff6ff;">
+                <div class="grade-item-label">Grade Point</div>
+                <div class="grade-item-value highlight">{{ grade.grade_point|default:"-" }}</div>
+            </div>
+        </div>
+        
+        {% if grade.remarks %}
+            <div class="instructor-remarks">
+                <div class="remarks-header">
+                    Instructor's Remarks
+                </div>
+                <div class="remarks-content">
+                    {{ grade.remarks }}
+                </div>
+            </div>
+        {% else %}
+            <div class="instructor-remarks" style="background: #f9fafb; border-left-color: #d1d5db;">
+                <div class="no-remarks">No remarks from instructor</div>
+            </div>
+        {% endif %}
+    </div>
+    {% endfor %}
+{% else %}
+    <div class="card">
+        <div class="card-body">
+            <div class="empty-state">
+                <div class="empty-icon">■</div>
+                <h3>No Grades Yet</h3>
+                <p>You don't have any grades recorded yet. Grades will appear here once your instructors submit them.</p>
+            </div>
+        </div>
+    </div>
+{% endif %}
+
+{% if grades %}
+<div class="card mt-2">
+    <div class="card-header">
+        <h2><span class="section-icon">▪</span> Grading System Reference</h2>
+    </div>
+    <div class="card-body">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem;">
+            <div>
+                <h3 style="margin-bottom: 1rem; color: #374151;">Grade Weights</h3>
+                <table style="width: 100%;">
+                    <tr>
+                        <td><strong>Prelim:</strong></td>
+                        <td style="text-align: right;">{{ grades.0.prelim_weight }}%</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Midterm:</strong></td>
+                        <td style="text-align: right;">{{ grades.0.midterm_weight }}%</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Final:</strong></td>
+                        <td style="text-align: right;">{{ grades.0.final_weight }}%</td>
+                    </tr>
+                </table>
+            </div>
+            <div>
+                <h3 style="margin-bottom: 1rem; color: #374151;">Grading Scale</h3>
+                <table style="width: 100%; font-size: 0.875rem;">
+                    <tr><td>97-100:</td><td style="text-align: right;"><strong>1.00</strong></td></tr>
+                    <tr><td>94-96:</td><td style="text-align: right;"><strong>1.25</strong></td></tr>
+                    <tr><td>91-93:</td><td style="text-align: right;"><strong>1.50</strong></td></tr>
+                    <tr><td>88-90:</td><td style="text-align: right;"><strong>1.75</strong></td></tr>
+                    <tr><td>85-87:</td><td style="text-align: right;"><strong>2.00</strong></td></tr>
+                    <tr><td>82-84:</td><td style="text-align: right;"><strong>2.25</strong></td></tr>
+                    <tr><td>79-81:</td><td style="text-align: right;"><strong>2.50</strong></td></tr>
+                    <tr><td>76-78:</td><td style="text-align: right;"><strong>2.75</strong></td></tr>
+                    <tr><td>75:</td><td style="text-align: right;"><strong>3.00</strong> (Passing)</td></tr>
+                    <tr style="color: #dc2626;"><td>Below 75:</td><td style="text-align: right;"><strong>5.00</strong> (Failed)</td></tr>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

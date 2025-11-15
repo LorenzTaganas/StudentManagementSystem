@@ -1,0 +1,580 @@
+{% extends 'base.html' %}
+
+{% block title %}My Profile - SGMS{% endblock %}
+
+{% block extra_css %}
+<style>
+.profile-sidebar-card {
+    height: fit-content;
+}
+
+.profile-picture-container {
+    position: relative;
+    width: 150px;
+    height: 150px;
+    margin: 0 auto 1rem;
+    cursor: pointer;
+}
+
+.profile-picture-container:hover .picture-overlay {
+    opacity: 1;
+}
+
+.picture-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s;
+    color: white;
+    font-size: 1.2rem;
+    text-align: center;
+}
+
+.profile-menu {
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    min-width: 200px;
+    z-index: 1000;
+    display: none;
+    margin-top: 10px;
+}
+
+.profile-menu.show {
+    display: block;
+}
+
+.profile-menu::before {
+    content: '';
+    position: absolute;
+    top: -6px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 12px;
+    height: 12px;
+    background: white;
+    transform: translateX(-50%) rotate(45deg);
+}
+
+.profile-menu-item {
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    transition: background 0.2s;
+    color: #374151;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    border: none;
+    background: none;
+    width: 100%;
+    text-align: left;
+    font-size: 0.95rem;
+}
+
+.profile-menu-item:hover {
+    background: #f3f4f6;
+}
+
+.profile-menu-item:first-child:hover {
+    border-radius: 8px 8px 0 0;
+}
+
+.profile-menu-item:last-child:hover {
+    border-radius: 0 0 8px 8px;
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+.sidebar-menu {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: 2rem;
+}
+
+.sidebar-menu-item {
+    padding: 0.75rem 1rem;
+    background: white;
+    border: none;
+    text-align: left;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: all 0.3s;
+    font-size: 1rem;
+    color: #374151;
+    text-decoration: none;
+    display: block;
+}
+
+.sidebar-menu-item:hover {
+    background: #f3f4f6;
+    color: #667eea;
+}
+
+.sidebar-menu-item.active {
+    background: #667eea;
+    color: white;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .profile-grid {
+        grid-template-columns: 1fr !important;
+        gap: 1rem !important;
+    }
+    
+    .form-grid-2col {
+        grid-template-columns: 1fr !important;
+    }
+    
+    .profile-sidebar-card {
+        margin-bottom: 1rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<h1>My Profile</h1>
+
+<div class="profile-grid" style="display: grid; grid-template-columns: 300px 1fr; gap: 2rem;">
+    <!-- Left Sidebar -->
+    <div>
+        <div class="card profile-sidebar-card">
+            <div class="card-body text-center">
+                <!-- Profile Picture with Menu -->
+                <form method="post" enctype="multipart/form-data" id="pictureForm" style="display: none;">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="update_profile">
+                    <input type="file" name="profile_picture" id="profile_picture" accept="image/*" onchange="this.form.submit()">
+                </form>
+                
+                <div style="position: relative;">
+                    <div class="profile-picture-container" onclick="toggleProfileMenu()">
+                        {% if user.profile_picture %}
+                            <img src="{{ user.profile_picture.url }}" alt="Profile Picture" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover; display: block;">
+                        {% else %}
+                            <div style="width: 100%; height: 100%; border-radius: 50%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; font-size: 3.5rem; color: white; font-weight: bold;">
+                                {% if user.first_name and user.last_name %}
+                                    {{ user.first_name.0|upper }}{{ user.last_name.0|upper }}
+                                {% else %}
+                                    {{ user.username.0|upper }}
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                        <div class="picture-overlay">
+                            {% comment %} <span>📷</span> {% endcomment %}
+                        </div>
+                    </div>
+                    
+                    <div class="profile-menu" id="profileMenu">
+                        <button class="profile-menu-item" onclick="document.getElementById('profile_picture').click(); toggleProfileMenu();">
+                            {% comment %} <span>📷</span> {% endcomment %} Change profile picture
+                        </button>
+                        {% if user.profile_picture %}
+                        <form method="post" id="removePhotoForm" style="margin: 0;">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="remove_photo">
+                            <button type="submit" class="profile-menu-item" style="color: #dc2626;">
+                                {% comment %} <span>🗑️</span> {% endcomment %} Remove photo
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <h3 style="margin-top: 1rem;">{{ user.get_full_name|default:user.username }}</h3>
+                <p class="badge {% if user.is_student %}badge-student{% elif user.is_instructor %}badge-instructor{% else %}badge-admin{% endif %}">
+                    {{ user.get_role_display }}
+                </p>
+                {% if user.is_student and user.student_profile %}
+                    <p style="color: #6b7280; font-size: 0.875rem; margin-top: 0.5rem;">Student ID: {{ user.student_profile.student_id }}</p>
+                {% elif user.is_instructor and user.instructor_profile %}
+                    <p style="color: #6b7280; font-size: 0.875rem; margin-top: 0.5rem;">Employee ID: {{ user.instructor_profile.employee_id }}</p>
+                {% else %}
+                    <p style="color: #6b7280; font-size: 0.875rem; margin-top: 0.5rem;">@{{ user.username }}</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Navigation Menu -->
+        <div class="sidebar-menu">
+            <button class="sidebar-menu-item active" onclick="switchTab('information')">
+                ▸ Information
+            </button>
+            <button class="sidebar-menu-item" onclick="switchTab('password')">
+                ▸ Change Password
+            </button>
+        </div>
+    </div>
+
+    <!-- Right Content Area -->
+    <div>
+        <!-- Information Tab -->
+        <!-- Information Tab -->
+        <div id="information" class="tab-content active">
+            <div class="card">
+                <div class="card-header">
+                    <h2>Personal Information</h2>
+                </div>
+                <div class="card-body">
+                    <form method="post" id="profileForm" novalidate>
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="update_profile">
+                        
+                        <div class="form-grid-2col" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                            <div class="form-group" style="grid-column: 1 / 3;">
+                                <label for="username">Username</label>
+                                <input type="text" id="username" name="username" value="{{ user.username }}" readonly style="background: #f3f4f6; cursor: not-allowed;">
+                                <span class="error-message" id="username_error"></span>
+                            </div>
+                            <div class="form-group" style="grid-column: 1 / 2;">
+                                <label for="first_name">First Name</label>
+                                <input type="text" id="first_name" name="first_name" value="{{ user.first_name }}" required>
+                                <span class="error-message" id="first_name_error"></span>
+                            </div>
+                            <div class="form-group" style="grid-column: 2 / 3;">
+                                <label for="last_name">Last Name</label>
+                                <input type="text" id="last_name" name="last_name" value="{{ user.last_name }}" required>
+                                <span class="error-message" id="last_name_error"></span>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="email">Email Address</label>
+                            <input type="email" id="email" name="email" value="{{ user.email }}" required>
+                            <span class="error-message" id="email_error"></span>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="phone_number">Phone Number</label>
+                            <input type="text" id="phone_number" name="phone_number" value="{{ user.phone_number|default:'' }}" placeholder="09123456789 or +639123456789" pattern="^(09|\+639)\d{9}$">
+                            <small>Format: 09123456789 or +639123456789</small>
+                            <span class="error-message" id="phone_error"></span>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="address">Address</label>
+                            <textarea id="address" name="address" rows="3" placeholder="Enter your complete address">{{ user.address|default:'' }}</textarea>
+                        </div>
+                        
+                        <button type="submit" class="btn-primary">Save Changes</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Student/Instructor Profile Info -->
+            {% if user.is_student and user.student_profile %}
+            <div class="card mt-2">
+                <div class="card-header">
+                    <h2>Student Information</h2>
+                </div>
+                <div class="card-body">
+                    <p><strong>Student ID:</strong> {{ user.student_profile.student_id }}</p>
+                    <p><strong>Year Level:</strong> {{ user.student_profile.get_year_level_display }}</p>
+                    <p><strong>Program:</strong> {{ user.student_profile.program|default:"-" }}</p>
+                    <p><strong>Register Since:</strong> {{ user.student_profile.enrolled_date|date:"F d, Y" }}</p>
+                </div>
+            </div>
+            {% endif %}
+            
+            {% if user.is_instructor and user.instructor_profile %}
+            <div class="card mt-2">
+                <div class="card-header">
+                    <h2>👨‍🏫 Instructor Information</h2>
+                </div>
+                <div class="card-body">
+                    <p><strong>Employee ID:</strong> {{ user.instructor_profile.employee_id }}</p>
+                    <p><strong>Department:</strong> {{ user.instructor_profile.department|default:"-" }}</p>
+                    <p><strong>Specialization:</strong> {{ user.instructor_profile.specialization|default:"-" }}</p>
+                    {% if user.instructor_profile.hire_date %}
+                        <p><strong>Hire Date:</strong> {{ user.instructor_profile.hire_date|date:"F d, Y" }}</p>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Change Password Tab -->
+        <div id="password" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <h2>Change Password</h2>
+                </div>
+                <div class="card-body">
+                    <form method="post" id="passwordForm" novalidate>
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="change_password">
+                        
+                        <div class="form-group">
+                            <label for="old_password">Current Password</label>
+                            <input type="password" id="old_password" name="old_password" required>
+                            <span class="error-message" id="old_password_error"></span>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="new_password">New Password</label>
+                            <input type="password" id="new_password" name="new_password" required minlength="8">
+                            <small>Must be 8+ characters with 1 uppercase, 1 number, and 1 special character</small>
+                            <span class="error-message" id="new_password_error"></span>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="confirm_password">Confirm New Password</label>
+                            <input type="password" id="confirm_password" name="confirm_password" required minlength="8">
+                            <span class="error-message" id="confirm_password_error"></span>
+                        </div>
+                        
+                        <button type="submit" class="btn-primary">Update Password</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleProfileMenu() {
+    const menu = document.getElementById('profileMenu');
+    menu.classList.toggle('show');
+}
+
+// Close profile menu when clicking outside
+window.addEventListener('click', function(e) {
+    const container = document.querySelector('.profile-picture-container');
+    const menu = document.getElementById('profileMenu');
+    if (menu && !container.contains(e.target) && !menu.contains(e.target)) {
+        menu.classList.remove('show');
+    }
+});
+
+function switchTab(tabName) {
+    // Hide all tabs
+    document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.classList.remove('active');
+    });
+    
+    // Remove active class from all menu items
+    document.querySelectorAll('.sidebar-menu-item').forEach(item => {
+        item.classList.remove('active');
+    });
+    
+    // Show selected tab
+    document.getElementById(tabName).classList.add('active');
+    
+    // Add active class to clicked menu item
+    event.target.classList.add('active');
+}
+
+// Form validation
+document.addEventListener('DOMContentLoaded', function() {
+    const profileForm = document.getElementById('profileForm');
+    const passwordForm = document.getElementById('passwordForm');
+    const phoneInput = document.getElementById('phone_number');
+    const phoneError = document.getElementById('phone_error');
+    const emailInput = document.getElementById('email');
+    const firstNameInput = document.getElementById('first_name');
+    const lastNameInput = document.getElementById('last_name');
+
+    // Profile form validation
+    if (profileForm) {
+        profileForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            let isValid = true;
+
+            // Clear all errors
+            document.querySelectorAll('#profileForm .error-message').forEach(err => {
+                err.style.display = 'none';
+                err.textContent = '';
+            });
+            document.querySelectorAll('#profileForm input').forEach(input => {
+                input.classList.remove('error');
+            });
+
+            // Validate first name
+            if (!firstNameInput.value.trim()) {
+                document.getElementById('first_name_error').textContent = 'First name is required';
+                document.getElementById('first_name_error').style.display = 'block';
+                firstNameInput.classList.add('error');
+                isValid = false;
+            } else if (/\d/.test(firstNameInput.value)) {
+                document.getElementById('first_name_error').textContent = 'Name cannot contain numbers';
+                document.getElementById('first_name_error').style.display = 'block';
+                firstNameInput.classList.add('error');
+                isValid = false;
+            }
+
+            // Validate last name
+            if (!lastNameInput.value.trim()) {
+                document.getElementById('last_name_error').textContent = 'Last name is required';
+                document.getElementById('last_name_error').style.display = 'block';
+                lastNameInput.classList.add('error');
+                isValid = false;
+            } else if (/\d/.test(lastNameInput.value)) {
+                document.getElementById('last_name_error').textContent = 'Name cannot contain numbers';
+                document.getElementById('last_name_error').style.display = 'block';
+                lastNameInput.classList.add('error');
+                isValid = false;
+            }
+
+            // Validate email
+            const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailInput.value.trim()) {
+                document.getElementById('email_error').textContent = 'Email is required';
+                document.getElementById('email_error').style.display = 'block';
+                emailInput.classList.add('error');
+                isValid = false;
+            } else if (!emailPattern.test(emailInput.value)) {
+                document.getElementById('email_error').textContent = 'Please enter a valid email address';
+                document.getElementById('email_error').style.display = 'block';
+                emailInput.classList.add('error');
+                isValid = false;
+            }
+
+            // Validate phone number (optional but must be valid format if provided)
+            const phonePattern = /^(09|\+639)\d{9}$/;
+            const phoneValue = phoneInput.value.trim();
+            if (phoneValue && !phonePattern.test(phoneValue)) {
+                phoneError.textContent = 'Invalid phone number. Use format: 09123456789 or +639123456789';
+                phoneError.style.display = 'block';
+                phoneInput.classList.add('error');
+                isValid = false;
+            }
+
+            if (!isValid) {
+                e.preventDefault();
+            } else {
+                profileForm.submit();
+            }
+        });
+
+        // Clear errors when typing
+        [firstNameInput, lastNameInput, emailInput, phoneInput].forEach(input => {
+            if (input) {
+                input.addEventListener('input', function() {
+                    const errorId = this.id + '_error';
+                    const errorElement = document.getElementById(errorId);
+                    if (errorElement && this.value.trim()) {
+                        errorElement.style.display = 'none';
+                        this.classList.remove('error');
+                    }
+                });
+            }
+        });
+    }
+
+    // Password change form validation
+    if (passwordForm) {
+        const oldPasswordInput = document.getElementById('old_password');
+        const newPasswordInput = document.getElementById('new_password');
+        const confirmPasswordInput = document.getElementById('confirm_password');
+
+        passwordForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            let isValid = true;
+
+            // Clear all errors
+            document.querySelectorAll('#passwordForm .error-message').forEach(err => {
+                err.style.display = 'none';
+                err.textContent = '';
+            });
+            document.querySelectorAll('#passwordForm input').forEach(input => {
+                input.classList.remove('error');
+            });
+
+            // Validate old password
+            if (!oldPasswordInput.value) {
+                document.getElementById('old_password_error').textContent = 'Current password is required';
+                document.getElementById('old_password_error').style.display = 'block';
+                oldPasswordInput.classList.add('error');
+                isValid = false;
+            }
+
+            // Validate new password
+            const passwordPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+            if (!newPasswordInput.value) {
+                document.getElementById('new_password_error').textContent = 'New password is required';
+                document.getElementById('new_password_error').style.display = 'block';
+                newPasswordInput.classList.add('error');
+                isValid = false;
+            } else if (!passwordPattern.test(newPasswordInput.value)) {
+                document.getElementById('new_password_error').textContent = 'Password must be 8+ characters with 1 uppercase, 1 number, and 1 special character (@$!%*?&)';
+                document.getElementById('new_password_error').style.display = 'block';
+                newPasswordInput.classList.add('error');
+                isValid = false;
+            }
+
+            // Validate confirm password
+            if (!confirmPasswordInput.value) {
+                document.getElementById('confirm_password_error').textContent = 'Please confirm your new password';
+                document.getElementById('confirm_password_error').style.display = 'block';
+                confirmPasswordInput.classList.add('error');
+                isValid = false;
+            } else if (newPasswordInput.value !== confirmPasswordInput.value) {
+                document.getElementById('confirm_password_error').textContent = 'Passwords do not match';
+                document.getElementById('confirm_password_error').style.display = 'block';
+                confirmPasswordInput.classList.add('error');
+                isValid = false;
+            }
+
+            if (!isValid) {
+                e.preventDefault();
+            } else {
+                passwordForm.submit();
+            }
+        });
+
+        [oldPasswordInput, newPasswordInput, confirmPasswordInput].forEach(input => {
+            if (input) {
+                input.addEventListener('input', function() {
+                    const errorId = this.id + '_error';
+                    const errorElement = document.getElementById(errorId);
+                    if (errorElement && this.value) {
+                        errorElement.style.display = 'none';
+                        this.classList.remove('error');
+                    }
+                });
+            }
+        });
+
+        confirmPasswordInput.addEventListener('input', function() {
+            if (this.value && newPasswordInput.value !== this.value) {
+                document.getElementById('confirm_password_error').textContent = 'Passwords do not match';
+                document.getElementById('confirm_password_error').style.display = 'block';
+                this.classList.add('error');
+            }
+        });
+    }
+});
+
+// Close modal when clicking outside
+const deleteModal = document.getElementById('deleteModal');
+if (deleteModal) {
+    deleteModal.addEventListener('click', function(e) {
+        if (e.target === this) {
+            this.style.display = 'none';
+        }
+    });
+}
+</script>
+
+{% endblock %}

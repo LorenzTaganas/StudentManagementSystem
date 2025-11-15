@@ -1,0 +1,399 @@
+{% extends 'base.html' %}
+
+{% block title %}Edit Grade - {{ student.get_full_name }} - SGMS{% endblock %}
+
+{% block extra_css %}
+<style>
+.back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #667eea;
+    text-decoration: none;
+    margin-bottom: 1rem;
+    font-size: 0.95rem;
+}
+
+.back-link:hover {
+    color: #5568d3;
+}
+
+.grade-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 2rem;
+    border-radius: 10px;
+    margin-bottom: 2rem;
+}
+
+.student-info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+}
+
+.info-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.info-label {
+    font-size: 0.875rem;
+    opacity: 0.9;
+}
+
+.info-value {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-top: 0.25rem;
+}
+
+.grade-form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.grade-preview {
+    background: #f9fafb;
+    padding: 1.5rem;
+    border-radius: 8px;
+    border: 2px solid #e5e7eb;
+}
+
+.preview-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.preview-item:last-child {
+    border-bottom: none;
+}
+
+.preview-label {
+    font-weight: 500;
+    color: #6b7280;
+}
+
+.preview-value {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #374151;
+}
+
+.preview-value.final {
+    color: #667eea;
+    font-size: 1.5rem;
+}
+
+.calculation-formula {
+    background: #eff6ff;
+    padding: 1rem;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    color: #1e40af;
+    margin-top: 1rem;
+}
+
+.help-text {
+    font-size: 0.875rem;
+    color: #6b7280;
+    margin-top: 0.5rem;
+}
+
+.grade-scale-table {
+    width: 100%;
+    margin-top: 1rem;
+}
+
+.grade-scale-table td {
+    padding: 0.5rem;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.grade-input-large {
+    font-size: 1.1rem;
+    padding: 0.75rem;
+    text-align: center;
+    font-weight: 600;
+}
+
+.student-avatar-large {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 2rem;
+    color: white;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    margin: 0 auto 1rem;
+}
+
+.current-grade {
+    background: #fef3c7;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    display: inline-block;
+    font-size: 0.875rem;
+    margin-top: 0.5rem;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<a href="{% url 'courses:subject_students' subject.id %}" class="back-link">
+    ← Back to Student List
+</a>
+
+<div class="grade-header">
+    <div style="text-align: center;">
+        {% if student.profile_picture %}
+            <img src="{{ student.profile_picture.url }}" alt="{{ student.get_full_name }}" class="student-avatar-large" style="object-fit: cover;">
+        {% else %}
+            <div class="student-avatar-large">
+                {{ student.first_name.0|upper }}{{ student.last_name.0|upper }}
+            </div>
+        {% endif %}
+    </div>
+    
+    <h1 style="margin: 0; text-align: center;">{{ student.get_full_name }}</h1>
+    <p style="text-align: center; margin-top: 0.5rem; opacity: 0.9;">@{{ student.username }}</p>
+    
+    <div class="student-info-grid">
+        <div class="info-item">
+            <span class="info-label">Student ID</span>
+            <span class="info-value">{{ student_profile.student_id|default:"-" }}</span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Subject</span>
+            <span class="info-value">{{ subject.code }} - {{ subject.name }}</span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Year Level</span>
+            <span class="info-value">Year {{ student_profile.year_level|default:"-" }}</span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Units</span>
+            <span class="info-value">{{ subject.units }}</span>
+        </div>
+    </div>
+</div>
+
+<form method="post" id="gradeForm">
+    {% csrf_token %}
+    
+    <div style="display: grid; grid-template-columns: 1fr 400px; gap: 2rem;">
+        <!-- Left: Grade Entry -->
+        <div>
+            <div class="card">
+                <div class="card-header">
+                    <h2><span class="section-icon">▪</span> Enter Grades</h2>
+                </div>
+                <div class="card-body">
+                    <div class="grade-form-grid">
+                        <div class="form-group">
+                            <label for="prelim_grade">Prelim Grade ({{ grade.prelim_weight }}%)</label>
+                            <input type="number" 
+                                   id="prelim_grade" 
+                                   name="prelim_grade" 
+                                   class="grade-input-large"
+                                   min="0" 
+                                   max="100" 
+                                   step="0.01"
+                                   value="{{ grade.prelim_grade|default:'' }}"
+                                   placeholder="0-100"
+                                   oninput="calculatePreview()">
+                            <small class="help-text">Enter grade from 0-100</small>
+                            {% if grade.prelim_grade %}
+                                <div class="current-grade">Current: {{ grade.prelim_grade }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="midterm_grade">Midterm Grade ({{ grade.midterm_weight }}%)</label>
+                            <input type="number" 
+                                   id="midterm_grade" 
+                                   name="midterm_grade" 
+                                   class="grade-input-large"
+                                   min="0" 
+                                   max="100" 
+                                   step="0.01"
+                                   value="{{ grade.midterm_grade|default:'' }}"
+                                   placeholder="0-100"
+                                   oninput="calculatePreview()">
+                            <small class="help-text">Enter grade from 0-100</small>
+                            {% if grade.midterm_grade %}
+                                <div class="current-grade">Current: {{ grade.midterm_grade }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="final_grade">Final Grade ({{ grade.final_weight }}%)</label>
+                            <input type="number" 
+                                   id="final_grade" 
+                                   name="final_grade" 
+                                   class="grade-input-large"
+                                   min="0" 
+                                   max="100" 
+                                   step="0.01"
+                                   value="{{ grade.final_grade|default:'' }}"
+                                   placeholder="0-100"
+                                   oninput="calculatePreview()">
+                            <small class="help-text">Enter grade from 0-100</small>
+                            {% if grade.final_grade %}
+                                <div class="current-grade">Current: {{ grade.final_grade }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="calculation-formula">
+                        <strong>Calculation:</strong> Weighted Average = (Prelim × {{ grade.prelim_weight }}%) + (Midterm × {{ grade.midterm_weight }}%) + (Final × {{ grade.final_weight }}%)
+                    </div>
+                    
+                    <div class="form-group" style="margin-top: 1.5rem;">
+                        <label for="remarks">Remarks (Optional)</label>
+                        <textarea id="remarks" 
+                                  name="remarks" 
+                                  rows="3" 
+                                  placeholder="Add any comments or remarks about the student's performance...">{{ grade.remarks|default:'' }}</textarea>
+                    </div>
+                    
+                    <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                        <button type="submit" class="btn-primary" style="flex: 1;">Save Grades</button>
+                        <a href="{% url 'courses:subject_students' subject.id %}" class="btn-secondary" style="flex: 1; text-align: center; padding: 0.75rem;">Cancel</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Right: Preview & Grading Scale -->
+        <div>
+            <div class="card">
+                <div class="card-header">
+                    <h2><span class="section-icon">▪</span> Grade Preview</h2>
+                </div>
+                <div class="card-body">
+                    <div class="grade-preview">
+                        <div class="preview-item">
+                            <span class="preview-label">Prelim ({{ grade.prelim_weight }}%)</span>
+                            <span class="preview-value" id="preview_prelim">{{ grade.prelim_grade|default:"-" }}</span>
+                        </div>
+                        <div class="preview-item">
+                            <span class="preview-label">Midterm ({{ grade.midterm_weight }}%)</span>
+                            <span class="preview-value" id="preview_midterm">{{ grade.midterm_grade|default:"-" }}</span>
+                        </div>
+                        <div class="preview-item">
+                            <span class="preview-label">Final ({{ grade.final_weight }}%)</span>
+                            <span class="preview-value" id="preview_final">{{ grade.final_grade|default:"-" }}</span>
+                        </div>
+                        <div class="preview-item" style="border-top: 2px solid #d1d5db; margin-top: 0.5rem; padding-top: 1rem;">
+                            <span class="preview-label" style="font-size: 1rem;">Weighted Average</span>
+                            <span class="preview-value final" id="preview_weighted">{{ grade.weighted_average|default:"-" }}</span>
+                        </div>
+                        <div class="preview-item">
+                            <span class="preview-label" style="font-size: 1rem;">GWA</span>
+                            <span class="preview-value final" id="preview_letter">{{ grade.letter_grade|default:"-" }}</span>
+                        </div>
+                        <div class="preview-item">
+                            <span class="preview-label" style="font-size: 1rem;">Status</span>
+                            <span class="preview-value" id="preview_status" style="font-size: 1rem;">
+                                {% if grade.letter_grade %}
+                                    {% if grade.letter_grade != '5.00' %}
+                                        <span style="color: #059669;">✓ Passed</span>
+                                    {% else %}
+                                        <span style="color: #dc2626;">✗ Failed</span>
+                                    {% endif %}
+                                {% else %}
+                                    <span style="color: #d97706;">⊙ Incomplete</span>
+                                {% endif %}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card mt-2">
+                <div class="card-header">
+                    <h2><span class="section-icon">▪</span> Grading Scale</h2>
+                </div>
+                <div class="card-body">
+                    <table class="grade-scale-table">
+                        <tr><td>97-100</td><td style="text-align: right;"><strong>1.00</strong></td></tr>
+                        <tr><td>94-96</td><td style="text-align: right;"><strong>1.25</strong></td></tr>
+                        <tr><td>91-93</td><td style="text-align: right;"><strong>1.50</strong></td></tr>
+                        <tr><td>88-90</td><td style="text-align: right;"><strong>1.75</strong></td></tr>
+                        <tr><td>85-87</td><td style="text-align: right;"><strong>2.00</strong></td></tr>
+                        <tr><td>82-84</td><td style="text-align: right;"><strong>2.25</strong></td></tr>
+                        <tr><td>79-81</td><td style="text-align: right;"><strong>2.50</strong></td></tr>
+                        <tr><td>76-78</td><td style="text-align: right;"><strong>2.75</strong></td></tr>
+                        <tr><td>75</td><td style="text-align: right;"><strong>3.00</strong> <span style="color: #059669;">(Passing)</span></td></tr>
+                        <tr style="color: #dc2626;"><td>Below 75</td><td style="text-align: right;"><strong>5.00</strong> (Failed)</td></tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+<script>
+const prelimWeight = {{ grade.prelim_weight }};
+const midtermWeight = {{ grade.midterm_weight }};
+const finalWeight = {{ grade.final_weight }};
+
+function getLetterGrade(average) {
+    if (average >= 97) return '1.00';
+    if (average >= 94) return '1.25';
+    if (average >= 91) return '1.50';
+    if (average >= 88) return '1.75';
+    if (average >= 85) return '2.00';
+    if (average >= 82) return '2.25';
+    if (average >= 79) return '2.50';
+    if (average >= 76) return '2.75';
+    if (average >= 75) return '3.00';
+    return '5.00';
+}
+
+function calculatePreview() {
+    const prelim = parseFloat(document.getElementById('prelim_grade').value) || 0;
+    const midterm = parseFloat(document.getElementById('midterm_grade').value) || 0;
+    const final = parseFloat(document.getElementById('final_grade').value) || 0;
+    
+    // Update individual previews
+    document.getElementById('preview_prelim').textContent = prelim ? prelim.toFixed(2) : '-';
+    document.getElementById('preview_midterm').textContent = midterm ? midterm.toFixed(2) : '-';
+    document.getElementById('preview_final').textContent = final ? final.toFixed(2) : '-';
+    
+    // Calculate weighted average if all grades are present
+    if (prelim > 0 && midterm > 0 && final > 0) {
+        const weighted = (prelim * prelimWeight / 100) + (midterm * midtermWeight / 100) + (final * finalWeight / 100);
+        const letter = getLetterGrade(weighted);
+        
+        document.getElementById('preview_weighted').textContent = weighted.toFixed(2);
+        document.getElementById('preview_letter').textContent = letter;
+        
+        // Update status
+        const statusEl = document.getElementById('preview_status');
+        if (letter !== '5.00') {
+            statusEl.innerHTML = '<span style="color: #059669;">✓ Passed</span>';
+        } else {
+            statusEl.innerHTML = '<span style="color: #dc2626;">✗ Failed</span>';
+        }
+    } else {
+        document.getElementById('preview_weighted').textContent = '-';
+        document.getElementById('preview_letter').textContent = '-';
+        document.getElementById('preview_status').innerHTML = '<span style="color: #d97706;">⊙ Incomplete</span>';
+    }
+}
+
+// Initialize preview on page load
+document.addEventListener('DOMContentLoaded', calculatePreview);
+</script>
+{% endblock %}

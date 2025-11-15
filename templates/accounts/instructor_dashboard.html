@@ -1,0 +1,156 @@
+{% extends 'base.html' %}
+
+{% block title %}Instructor Dashboard - SGMS{% endblock %}
+
+{% block extra_css %}
+<style>
+@media (max-width: 768px) {
+    .stats-grid {
+        grid-template-columns: 1fr !important;
+    }
+    
+    table {
+        font-size: 0.875rem;
+    }
+    
+    table th,
+    table td {
+        padding: 0.5rem !important;
+    }
+    
+    .card-header.flex-between {
+        flex-direction: column;
+        align-items: flex-start !important;
+        gap: 1rem;
+    }
+    
+    .card-header.flex-between > div {
+        width: 100%;
+    }
+    
+    .card-header.flex-between h2 {
+        margin-bottom: 0.5rem;
+    }
+    
+    /* Hide less important columns on mobile */
+    .hide-mobile {
+        display: none;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<h1>Welcome, {{ user.get_full_name|default:user.username }}!</h1>
+<p class="mb-3">Instructor Dashboard</p>
+
+<!-- Stats Cards -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <h3>My Subjects</h3>
+        <div class="stat-value">{{ total_subjects }}</div>
+    </div>
+    
+    <div class="stat-card" style="border-left-color: #10b981;">
+        <h3>Total Students</h3>
+        <div class="stat-value" style="color: #10b981;">{{ total_students }}</div>
+    </div>
+    
+    <div class="stat-card" style="border-left-color: #f59e0b;">
+        <h3>Announcements Posted</h3>
+        <div class="stat-value" style="color: #f59e0b;">{{ announcements.count }}</div>
+    </div>
+</div>
+
+<!-- My Subjects -->
+<div class="card">
+    <div class="card-header flex-between">
+        <h2><span class="section-icon">▪</span> My Subjects</h2>
+    </div>
+    <div class="card-body">
+        {% if subjects %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Code</th>
+                        <th>Subject Name</th>
+                        <th class="hide-mobile">Course</th>
+                        <th class="hide-mobile">Units</th>
+                        <th class="hide-mobile">Year Level</th>
+                        <th class="hide-mobile">Semester</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for subject in subjects %}
+                    <tr>
+                        <td><strong>{{ subject.code }}</strong></td>
+                        <td>{{ subject.name }}</td>
+                        <td class="hide-mobile">{{ subject.course.code }}</td>
+                        <td class="hide-mobile">{{ subject.units }}</td>
+                        <td class="hide-mobile">Year {{ subject.year_level }}</td>
+                        <td class="hide-mobile">{{ subject.get_semester_display }}</td>
+                        <td>
+                            <a href="{% url 'courses:subject_students' subject.id %}" class="btn-primary" style="padding: 0.25rem 0.75rem; font-size: 0.875rem;">View Students</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p class="text-center" style="color: #6b7280;">No subjects assigned yet. Please contact your administrator.</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Recent Announcements -->
+<div class="card">
+    <div class="card-header flex-between">
+        <h2><span class="section-icon">▪</span> My Recent Announcements</h2>
+        <div style="display: flex; gap: 0.5rem;">
+            <a href="{% url 'announcements:my_announcements' %}" class="btn-secondary">View All</a>
+            <a href="{% url 'announcements:create_announcement' %}" class="btn-primary">Create New</a>
+        </div>
+    </div>
+    <div class="card-body">
+        {% if announcements %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Title</th>
+                        <th>Type</th>
+                        <th class="hide-mobile">Subject</th>
+                        <th class="hide-mobile">Date</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for announcement in announcements|slice:":2" %}
+                    <tr>
+                        <td><strong>{{ announcement.title }}</strong></td>
+                        <td>
+                            {% if announcement.announcement_type == 'system' %}
+                                <span class="badge" style="background: #f59e0b;">System-wide</span>
+                            {% else %}
+                                <span class="badge badge-instructor">Course-specific</span>
+                            {% endif %}
+                        </td>
+                        <td class="hide-mobile">{{ announcement.subject.code|default:"-" }}</td>
+                        <td class="hide-mobile">{{ announcement.created_at|date:"M d, Y" }}</td>
+                        <td>
+                            {% if announcement.is_active %}
+                                <span class="badge badge-student">Active</span>
+                            {% else %}
+                                <span class="badge" style="background: #6b7280;">Inactive</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p class="text-center" style="color: #6b7280;">No announcements posted yet.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

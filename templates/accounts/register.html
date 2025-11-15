@@ -1,0 +1,250 @@
+{% extends 'base.html' %}
+
+{% block title %}Register - SGMS{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 600px; margin: 3rem auto;">
+    <div class="card-header text-center">
+        <h2>Create Account</h2>
+        <p>Register to access the Student Grade Management System</p>
+    </div>
+    <div class="card-body">
+        <form method="post" id="registerForm" novalidate>
+            {% csrf_token %}
+            
+            <div class="form-group">
+                <label for="{{ form.username.id_for_label }}">Username</label>
+                {{ form.username }}
+                <span class="error-message" id="username_error"></span>
+                {% if form.username.errors %}
+                    <ul class="errorlist">
+                        {% for error in form.username.errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+            
+            <div class="form-group">
+                <label for="{{ form.email.id_for_label }}">Email</label>
+                {{ form.email }}
+                <span class="error-message" id="email_error"></span>
+                {% if form.email.errors %}
+                    <ul class="errorlist">
+                        {% for error in form.email.errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div class="form-group">
+                    <label for="{{ form.first_name.id_for_label }}">First Name</label>
+                    {{ form.first_name }}
+                    <span class="error-message" id="first_name_error"></span>
+                    {% if form.first_name.errors %}
+                        <ul class="errorlist">
+                            {% for error in form.first_name.errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                </div>
+                
+                <div class="form-group">
+                    <label for="{{ form.last_name.id_for_label }}">Last Name</label>
+                    {{ form.last_name }}
+                    <span class="error-message" id="last_name_error"></span>
+                    {% if form.last_name.errors %}
+                        <ul class="errorlist">
+                            {% for error in form.last_name.errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="{{ form.role.id_for_label }}">Role</label>
+                {{ form.role }}
+                <small>Select your role: Student or Instructor</small>
+                <span class="error-message" id="role_error"></span>
+                {% if form.role.errors %}
+                    <ul class="errorlist">
+                        {% for error in form.role.errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+            
+            <div class="form-group">
+                <label for="{{ form.password.id_for_label }}">Password</label>
+                {{ form.password }}
+                <small>Must be at least 8 characters with 1 uppercase, 1 number, and 1 special character</small>
+                <span class="error-message" id="password_error"></span>
+                {% if form.password.errors %}
+                    <ul class="errorlist">
+                        {% for error in form.password.errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+            
+            <div class="form-group">
+                <label for="{{ form.password_confirm.id_for_label }}">Confirm Password</label>
+                {{ form.password_confirm }}
+                <span class="error-message" id="password_confirm_error"></span>
+                {% if form.password_confirm.errors %}
+                    <ul class="errorlist">
+                        {% for error in form.password_confirm.errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+            
+            {% if form.non_field_errors %}
+                <div class="alert alert-error">
+                    {{ form.non_field_errors }}
+                </div>
+            {% endif %}
+            
+            <button type="submit" class="btn-primary" style="width: 100%;">Register</button>
+        </form>
+        
+        <div class="text-center mt-3">
+            <p>Already have an account? <a href="{% url 'accounts:login' %}">Login here</a></p>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('registerForm');
+    const fields = {
+        username: document.getElementById('id_username'),
+        email: document.getElementById('id_email'),
+        first_name: document.getElementById('id_first_name'),
+        last_name: document.getElementById('id_last_name'),
+        role: document.getElementById('id_role'),
+        password: document.getElementById('id_password'),
+        password_confirm: document.getElementById('id_password_confirm')
+    };
+
+    const errors = {
+        username: document.getElementById('username_error'),
+        email: document.getElementById('email_error'),
+        first_name: document.getElementById('first_name_error'),
+        last_name: document.getElementById('last_name_error'),
+        role: document.getElementById('role_error'),
+        password: document.getElementById('password_error'),
+        password_confirm: document.getElementById('password_confirm_error')
+    };
+
+    function showError(field, message) {
+        errors[field].textContent = message;
+        errors[field].style.display = 'block';
+        fields[field].classList.add('error');
+    }
+
+    function clearError(field) {
+        errors[field].textContent = '';
+        errors[field].style.display = 'none';
+        fields[field].classList.remove('error');
+    }
+
+    form.addEventListener('submit', function(e) {
+        let isValid = true;
+
+        // Clear all errors
+        Object.keys(fields).forEach(field => clearError(field));
+
+        // Validate username
+        if (!fields.username.value.trim()) {
+            showError('username', 'Username is required');
+            isValid = false;
+        }
+
+        // Validate email
+        const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!fields.email.value.trim()) {
+            showError('email', 'Email is required');
+            isValid = false;
+        } else if (!emailPattern.test(fields.email.value)) {
+            showError('email', 'Please enter a valid email address');
+            isValid = false;
+        }
+
+        // Validate first name
+        if (!fields.first_name.value.trim()) {
+            showError('first_name', 'First name is required');
+            isValid = false;
+        } else if (/\d/.test(fields.first_name.value)) {
+            showError('first_name', 'Name cannot contain numbers');
+            isValid = false;
+        }
+
+        // Validate last name
+        if (!fields.last_name.value.trim()) {
+            showError('last_name', 'Last name is required');
+            isValid = false;
+        } else if (/\d/.test(fields.last_name.value)) {
+            showError('last_name', 'Name cannot contain numbers');
+            isValid = false;
+        }
+
+        // Validate role
+        if (!fields.role.value) {
+            showError('role', 'Please select a role');
+            isValid = false;
+        }
+
+        // Validate password
+        if (!fields.password.value) {
+            showError('password', 'Password is required');
+            isValid = false;
+        } else {
+            // Password must be at least 8 characters with 1 uppercase, 1 number, and 1 special character
+            const passwordPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+            if (!passwordPattern.test(fields.password.value)) {
+                showError('password', 'Password must be 8+ characters with 1 uppercase, 1 number, and 1 special character (@$!%*?&)');
+                isValid = false;
+            }
+        }
+
+        // Validate password confirmation
+        if (!fields.password_confirm.value) {
+            showError('password_confirm', 'Please confirm your password');
+            isValid = false;
+        } else if (fields.password.value !== fields.password_confirm.value) {
+            showError('password_confirm', 'Passwords do not match');
+            isValid = false;
+        }
+
+        if (!isValid) {
+            e.preventDefault();
+        }
+    });
+
+    // Clear errors when user starts typing
+    Object.keys(fields).forEach(fieldName => {
+        fields[fieldName].addEventListener('input', function() {
+            if (this.value.trim() || fieldName === 'password' || fieldName === 'password_confirm') {
+                clearError(fieldName);
+            }
+        });
+    });
+
+    // Password match validation while typing
+    fields.password_confirm.addEventListener('input', function() {
+        if (this.value && fields.password.value && fields.password.value !== this.value) {
+            showError('password_confirm', 'Passwords do not match');
+        }
+    });
+});
+</script>
+{% endblock %}

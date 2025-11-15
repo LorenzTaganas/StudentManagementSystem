@@ -1,0 +1,155 @@
+{% extends 'base.html' %}
+
+{% block title %}Student Dashboard - SGMS{% endblock %}
+
+{% block content %}
+<h1>Welcome, {{ user.get_full_name|default:user.username }}!</h1>
+<p class="mb-3">Student Dashboard</p>
+
+<!-- Stats Cards -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <h3>Current GPA</h3>
+        <div class="stat-value {% if gpa >= 3.5 %}grade-excellent{% elif gpa >= 3.0 %}grade-good{% elif gpa >= 2.0 %}grade-average{% else %}grade-poor{% endif %}">
+            {{ gpa|floatformat:2 }}
+        </div>
+    </div>
+    
+    <div class="stat-card" style="border-left-color: #10b981;">
+        <h3>Enrolled Subjects</h3>
+        <div class="stat-value" style="color: #10b981;">{{ total_enrollments }}</div>
+    </div>
+    
+    <div class="stat-card" style="border-left-color: #f59e0b;">
+        <h3>Recent Grades</h3>
+        <div class="stat-value" style="color: #f59e0b;">{{ grades.count }}</div>
+    </div>
+</div>
+
+<!-- Current Enrollments -->
+<div class="card">
+    <div class="card-header">
+        <h2>▪ My Current Subjects</h2>
+    </div>
+    <div class="card-body">
+        {% if enrollments %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Code</th>
+                        <th>Subject Name</th>
+                        <th>Units</th>
+                        <th>Instructor</th>
+                        <th>Semester</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for enrollment in enrollments %}
+                    <tr>
+                        <td><strong>{{ enrollment.subject.code }}</strong></td>
+                        <td>{{ enrollment.subject.name }}</td>
+                        <td>{{ enrollment.subject.units }}</td>
+                        <td>{{ enrollment.subject.instructor.get_full_name|default:enrollment.subject.instructor.username }}</td>
+                        <td>{{ enrollment.subject.get_semester_display }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p class="text-center" style="color: #6b7280;">No active enrollments found. Please contact your administrator.</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Recent Grades -->
+<div class="card">
+    <div class="card-header flex-between">
+        <h2><span class="section-icon">▪</span> Recent Grades</h2>
+        <a href="{% url 'accounts:view_all_grades' %}" class="btn-primary">View All Grades</a>
+    </div>
+    <div class="card-body">
+        {% if grades %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Subject</th>
+                        <th>Prelim</th>
+                        <th>Midterm</th>
+                        <th>Final</th>
+                        <th>Average</th>
+                        <th>Grade</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for grade in grades %}
+                    <tr>
+                        <td><strong>{{ grade.enrollment.subject.code }}</strong></td>
+                        <td>{{ grade.prelim_grade|default:"-" }}</td>
+                        <td>{{ grade.midterm_grade|default:"-" }}</td>
+                        <td>{{ grade.final_grade|default:"-" }}</td>
+                        <td>
+                            {% if grade.weighted_average %}
+                                <strong>{{ grade.weighted_average }}</strong>
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if grade.letter_grade %}
+                                <span class="{% if grade.grade_point >= 3.5 %}grade-excellent{% elif grade.grade_point >= 3.0 %}grade-good{% elif grade.grade_point >= 2.0 %}grade-average{% else %}grade-poor{% endif %}">
+                                    {{ grade.letter_grade }}
+                                </span>
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p class="text-center" style="color: #6b7280;">No grades available yet.</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Announcements -->
+<div class="card">
+    <div class="card-header flex-between">
+        <h2><span class="section-icon">▪</span> Recent Announcements</h2>
+        <a href="{% url 'accounts:view_all_announcements' %}" class="btn-secondary">View All</a>
+    </div>
+    <div class="card-body">
+        {% if announcements %}
+            {% for announcement in announcements|slice:":2" %}
+                <div class="alert alert-info mb-2" style="border-left: 4px solid {% if announcement.announcement_type == 'system' %}#f59e0b{% else %}#667eea{% endif %}; padding: 1.5rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.75rem;">
+                        <h3 style="margin: 0; font-size: 1.1rem; color: #374151;">{{ announcement.title }}</h3>
+                        {% if announcement.announcement_type == 'system' %}
+                            <span class="badge" style="background: #fef3c7; color: #92400e; font-size: 0.75rem; text-transform: uppercase;">System-wide</span>
+                        {% else %}
+                            <span class="badge" style="background: #63a1f3ff; color: #1e40af; font-size: 0.75rem; text-transform: uppercase;">Course-specific</span>
+                        {% endif %}
+                    </div>
+                    {% if announcement.subject %}
+                        <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
+                            <span style="background: #667eea; color: white; padding: 0.25rem 0.75rem; border-radius: 4px; font-size: 0.875rem; font-weight: 600;">{{ announcement.subject.code }}</span>
+                            <span style="color: #6b7280; font-size: 0.875rem;">Posted: {{ announcement.created_at|date:"M d, Y g:i A" }}</span>
+                        </div>
+                    {% else %}
+                        <div style="margin-bottom: 0.5rem;">
+                            <span style="color: #6b7280; font-size: 0.875rem;">Posted: {{ announcement.created_at|date:"M d, Y g:i A" }}</span>
+                        </div>
+                    {% endif %}
+                    <p style="margin: 0.5rem 0 0.75rem 0; color: #4b5563; line-height: 1.5;">{{ announcement.content|truncatewords:20 }}</p>
+                    <div style="padding-top: 0.75rem; border-top: 1px solid #e5e7eb; font-size: 0.875rem; color: #6b7280;">
+                        By: {{ announcement.created_by.get_full_name|default:announcement.created_by.username }}
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <p class="text-center" style="color: #6b7280;">No announcements yet.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

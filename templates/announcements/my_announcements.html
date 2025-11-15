@@ -1,0 +1,280 @@
+{% extends 'base.html' %}
+
+{% block title %}My Announcements - SGMS{% endblock %}
+
+{% block extra_css %}
+<style>
+.back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #667eea;
+    text-decoration: none;
+    margin-bottom: 1rem;
+    font-size: 0.95rem;
+}
+
+.back-link:hover {
+    color: #5568d3;
+}
+
+.announcements-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 2rem;
+    border-radius: 10px;
+    margin-bottom: 2rem;
+}
+
+.header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.announcement-card {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-left: 4px solid #667eea;
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    transition: all 0.3s;
+}
+
+.announcement-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transform: translateX(4px);
+}
+
+.announcement-card.system {
+    border-left-color: #f59e0b;
+}
+
+.announcement-card.course {
+    border-left-color: #667eea;
+}
+
+.announcement-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+    margin-bottom: 1rem;
+}
+
+.announcement-title {
+    margin: 0;
+    font-size: 1.25rem;
+    color: #374151;
+    font-weight: 600;
+}
+
+.announcement-meta {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.875rem;
+    color: #6b7280;
+    margin-top: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.announcement-content {
+    color: #4b5563;
+    line-height: 1.6;
+    margin-bottom: 1rem;
+}
+
+.announcement-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 1rem;
+    border-top: 1px solid #e5e7eb;
+    font-size: 0.875rem;
+    color: #6b7280;
+}
+
+.announcement-actions {
+    display: flex;
+    gap: 0.75rem;
+    padding-top: 1rem;
+    border-top: 1px solid #e5e7eb;
+    margin-top: 1rem;
+}
+
+.type-badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.type-system {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.type-course {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.status-active {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.status-inactive {
+    background: #e5e7eb;
+    color: #6b7280;
+}
+
+.btn-small {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    border-radius: 6px;
+    text-decoration: none;
+    display: inline-block;
+    cursor: pointer;
+    border: none;
+    transition: all 0.3s;
+}
+
+.btn-edit {
+    background: #667eea;
+    color: white;
+}
+
+.btn-edit:hover {
+    background: #5568d3;
+}
+
+.btn-delete {
+    background: #dc2626;
+    color: white;
+}
+
+.btn-delete:hover {
+    background: #b91c1c;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: #6b7280;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .announcement-header {
+        flex-direction: column;
+    }
+    
+    .announcement-meta {
+        flex-wrap: wrap;
+    }
+    
+    .announcement-actions {
+        flex-direction: column;
+    }
+    
+    .btn-small {
+        width: 100%;
+        text-align: center;
+    }
+    
+    h1 {
+        font-size: 1.5rem;
+    }
+    
+    .btn-primary {
+        padding: 0.5rem 1rem;
+        font-size: 0.875rem;
+    }
+    
+    .header-content {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .announcement-footer {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<a href="{% url 'accounts:dashboard' %}" class="back-link">
+    ← Back to Dashboard
+</a>
+
+<div class="announcements-header">
+    <div class="header-content">
+        <div>
+            <h1 style="margin: 0;">My Announcements</h1>
+            <p style="margin: 0.5rem 0 0 0; opacity: 0.9;">Manage your announcements</p>
+        </div>
+        <a href="{% url 'announcements:create_announcement' %}" class="btn-primary">Create New Announcement</a>
+    </div>
+</div>
+
+{% if announcements %}
+    {% for announcement in announcements %}
+    <div class="announcement-card {% if announcement.announcement_type == 'system' %}system{% else %}course{% endif %}">
+        <div class="announcement-header">
+            <div style="flex: 1;">
+                <h3 class="announcement-title">{{ announcement.title }}</h3>
+                <div class="announcement-meta">
+                    <span class="type-badge {% if announcement.announcement_type == 'system' %}type-system{% else %}type-course{% endif %}">
+                        {{ announcement.get_announcement_type_display }}
+                    </span>
+                    {% if announcement.subject %}
+                        <span>{{ announcement.subject.code }}</span>
+                    {% endif %}
+                    <span>Posted: {{ announcement.created_at|date:"M d, Y g:i A" }}</span>
+                    <span class="type-badge {% if announcement.is_active %}status-active{% else %}status-inactive{% endif %}">
+                        {% if announcement.is_active %}Active{% else %}Inactive{% endif %}
+                    </span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="announcement-content">
+            {{ announcement.content|linebreaks }}
+        </div>
+        
+        <div class="announcement-footer">
+            <span>By: {{ announcement.created_by.get_full_name|default:announcement.created_by.username }}</span>
+            {% if announcement.updated_at != announcement.created_at %}
+                <span>Updated: {{ announcement.updated_at|date:"M d, Y g:i A" }}</span>
+            {% endif %}
+        </div>
+        
+        <div class="announcement-actions">
+            <a href="{% url 'announcements:edit_announcement' announcement.id %}" class="btn-small btn-edit">Edit Announcement</a>
+            <form method="post" action="{% url 'announcements:delete_announcement' announcement.id %}" style="display: inline; margin: 0;" onsubmit="return confirm('Are you sure you want to delete this announcement?');">
+                {% csrf_token %}
+                <button type="submit" class="btn-small btn-delete">Delete</button>
+            </form>
+        </div>
+    </div>
+    {% endfor %}
+{% else %}
+    <div class="card">
+        <div class="card-body">
+            <div class="empty-state">
+                {% comment %} <div style="font-size: 4rem; margin-bottom: 1rem;">■</div> {% endcomment %}
+                <h3>No Announcements Yet</h3>
+                <p>You haven't created any announcements yet. Click the button above to create your first one!</p>
+            </div>
+        </div>
+    </div>
+{% endif %}
+{% endblock %}

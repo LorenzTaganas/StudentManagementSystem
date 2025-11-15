@@ -1,0 +1,199 @@
+{% extends 'base.html' %}
+
+{% block title %}Create Announcement - SGMS{% endblock %}
+
+{% block extra_css %}
+<style>
+.back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #667eea;
+    text-decoration: none;
+    margin-bottom: 1rem;
+    font-size: 0.95rem;
+}
+
+.back-link:hover {
+    color: #5568d3;
+}
+
+.form-section {
+    background: white;
+    padding: 2rem;
+    border-radius: 10px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.radio-group {
+    display: flex;
+    gap: 2rem;
+    margin-top: 0.5rem;
+}
+
+.radio-option {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.radio-option input[type="radio"] {
+    width: auto;
+    margin: 0;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+}
+
+.checkbox-label input[type="checkbox"] {
+    width: auto;
+    margin: 0;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<a href="{% url 'accounts:dashboard' %}" class="back-link">
+    ← Back to Dashboard
+</a>
+
+<h1>Create New Announcement</h1>
+
+<div class="form-section">
+    <form method="post" id="announcementForm" novalidate>
+        {% csrf_token %}
+        
+        <div class="form-group">
+            <label for="title">Announcement Title <span style="color: #dc2626;">*</span></label>
+            <input type="text" id="title" name="title" required placeholder="Enter announcement title">
+            <span class="error-message" id="title_error"></span>
+        </div>
+        
+        <div class="form-group">
+            <label for="content">Content <span style="color: #dc2626;">*</span></label>
+            <textarea id="content" name="content" rows="8" required placeholder="Enter announcement content..."></textarea>
+            <span class="error-message" id="content_error"></span>
+        </div>
+        
+        <div class="form-group">
+            <label>Announcement Type <span style="color: #dc2626;">*</span></label>
+            <div class="radio-group">
+                <div class="radio-option">
+                    <input type="radio" id="type_system" name="announcement_type" value="system" checked onchange="toggleSubjectField()">
+                    <label for="type_system">System-wide (All students)</label>
+                </div>
+                <div class="radio-option">
+                    <input type="radio" id="type_course" name="announcement_type" value="course" onchange="toggleSubjectField()">
+                    <label for="type_course">Course-specific (One subject only)</label>
+                </div>
+            </div>
+        </div>
+        
+        <div class="form-group" id="subject_field" style="display: none;">
+            <label for="subject">Select Subject <span style="color: #dc2626;">*</span></label>
+            <select id="subject" name="subject">
+                <option value="">-- Select a subject --</option>
+                {% for subject in subjects %}
+                    <option value="{{ subject.id }}">{{ subject.code }} - {{ subject.name }}</option>
+                {% endfor %}
+            </select>
+            <span class="error-message" id="subject_error"></span>
+        </div>
+        
+        <div class="form-group">
+            <label class="checkbox-label">
+                <input type="checkbox" name="is_active" checked>
+                <span>Active (Visible to students)</span>
+            </label>
+        </div>
+        
+        <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+            <button type="submit" class="btn-primary" style="flex: 1;">Create Announcement</button>
+            <a href="{% url 'accounts:dashboard' %}" class="btn-secondary" style="flex: 1; text-align: center; padding: 0.75rem;">Cancel</a>
+        </div>
+    </form>
+</div>
+
+<script>
+function toggleSubjectField() {
+    const courseRadio = document.getElementById('type_course');
+    const subjectField = document.getElementById('subject_field');
+    const subjectSelect = document.getElementById('subject');
+    
+    if (courseRadio.checked) {
+        subjectField.style.display = 'block';
+        subjectSelect.required = true;
+    } else {
+        subjectField.style.display = 'none';
+        subjectSelect.required = false;
+        subjectSelect.value = '';
+    }
+}
+
+// Form validation
+document.getElementById('announcementForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    let isValid = true;
+    
+    // Clear all errors
+    document.querySelectorAll('.error-message').forEach(err => {
+        err.style.display = 'none';
+        err.textContent = '';
+    });
+    document.querySelectorAll('input, textarea, select').forEach(input => {
+        input.classList.remove('error');
+    });
+    
+    // Validate title
+    const title = document.getElementById('title');
+    if (!title.value.trim()) {
+        document.getElementById('title_error').textContent = 'Title is required';
+        document.getElementById('title_error').style.display = 'block';
+        title.classList.add('error');
+        isValid = false;
+    }
+    
+    // Validate content
+    const content = document.getElementById('content');
+    if (!content.value.trim()) {
+        document.getElementById('content_error').textContent = 'Content is required';
+        document.getElementById('content_error').style.display = 'block';
+        content.classList.add('error');
+        isValid = false;
+    }
+    
+    // Validate subject if course-specific
+    const courseRadio = document.getElementById('type_course');
+    const subject = document.getElementById('subject');
+    if (courseRadio.checked && !subject.value) {
+        document.getElementById('subject_error').textContent = 'Please select a subject';
+        document.getElementById('subject_error').style.display = 'block';
+        subject.classList.add('error');
+        isValid = false;
+    }
+    
+    if (isValid) {
+        this.submit();
+    }
+});
+
+// Clear errors on input
+['title', 'content', 'subject'].forEach(id => {
+    const element = document.getElementById(id);
+    if (element) {
+        element.addEventListener('input', function() {
+            const errorId = this.id + '_error';
+            const errorElement = document.getElementById(errorId);
+            if (errorElement && this.value.trim()) {
+                errorElement.style.display = 'none';
+                this.classList.remove('error');
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

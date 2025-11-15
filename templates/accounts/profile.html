@@ -282,7 +282,7 @@
                 </div>
             </div>
 
-            <!-- Student/Instructor Profile Info -->
+            {% comment %} <!-- Student/Instructor Profile Info -->
             {% if user.is_student and user.student_profile %}
             <div class="card mt-2">
                 <div class="card-header">
@@ -311,7 +311,7 @@
                     {% endif %}
                 </div>
             </div>
-            {% endif %}
+            {% endif %} {% endcomment %}
         </div>
 
         <!-- Change Password Tab -->

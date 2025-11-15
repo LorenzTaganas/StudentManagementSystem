@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+
+{% block title %}All Subjects - SGMS{% endblock %}
+
+{% block extra_css %}
+<style>
+.back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #667eea;
+    text-decoration: none;
+    margin-bottom: 1rem;
+    font-size: 0.95rem;
+}
+
+.back-link:hover {
+    color: #5568d3;
+}
+
+.subjects-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 2rem;
+    border-radius: 10px;
+    margin-bottom: 2rem;
+}
+
+.header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.card {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    transition: all 0.3s;
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.table-responsive {
+    overflow-x: auto;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: #6b7280;
+}
+
+@media (max-width: 768px) {
+    .header-content {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .card-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    h1 {
+        font-size: 1.5rem;
+    }
+    .btn-primary {
+        padding: 0.5rem 1rem;
+        font-size: 0.875rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<a href="{% url 'accounts:dashboard' %}" class="back-link">
+    ← Back to Dashboard
+</a>
+
+<div class="subjects-header">
+    <div class="header-content">
+        <div>
+            <h1 style="margin: 0;">All My Subjects</h1>
+            <p style="margin: 0.5rem 0 0 0; opacity: 0.9;">{% if user.is_student %}Subjects Enrolled {% else %}Subjects Assigned{% endif %}</p>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h2>{% if user.is_student %}Subjects You Are Enrolled In{% else %}Subjects Assigned to You{% endif %}</h2>
+    </div>
+    <div class="card-body table-responsive">
+        {% if subjects %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Code</th>
+                        <th>Name</th>
+                        <th>Course</th>
+                        <th>Units</th>
+                        <th>Students Enrolled</th>
+                        <th>Semester</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for subject in subjects %}
+                    <tr>
+                        <td>{{ subject.code }}</td>
+                        <td>{{ subject.name }}</td>
+                        <td>{{ subject.course.code }}</td>
+                        <td>{{ subject.units }}</td>
+                        <td>{{ subject.enrollments.count }}</td>
+                        <td>{{ subject.get_semester_display }}</td>
+                        <td>
+                            <a href="{% url 'courses:subject_students' subject.id %}" class="btn-primary">View Students</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <div class="empty-state">
+                <h3>No Subjects Assigned</h3>
+                <p>You don't have any subjects assigned yet. Please contact your administrator.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -40,3 +40,19 @@ def subject_students(request, subject_id):
     }
     
     return render(request, 'courses/subject_students.html', context)
+
+@login_required
+def subject_list(request):
+    """View all subjects for the current user (student or instructor)"""
+    if request.user.is_instructor:
+        subjects = Subject.objects.filter(instructor=request.user)
+    elif request.user.is_student:
+        subjects = Subject.objects.filter(enrollments__student=request.user).distinct()
+    else:
+        messages.error(request, 'Access denied.')
+        return redirect('accounts:dashboard')
+    context = {
+        'subjects': subjects,
+        'total_subjects': subjects.count(),
+    }
+    return render(request, 'courses/subject_list.html', context)

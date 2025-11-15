@@ -66,6 +66,9 @@
 <div class="card">
     <div class="card-header flex-between">
         <h2><span class="section-icon">▪</span> My Subjects</h2>
+        <div style="display: flex; gap: 0.5rem;">
+            <a href="{% url 'courses:subject_list' %}" class="btn-secondary">View All</a>
+        </div>
     </div>
     <div class="card-body">
         {% if subjects %}
@@ -76,7 +79,7 @@
                         <th>Subject Name</th>
                         <th class="hide-mobile">Course</th>
                         <th class="hide-mobile">Units</th>
-                        <th class="hide-mobile">Year Level</th>
+                        <th class="hide-mobile">Students Enrolled</th>
                         <th class="hide-mobile">Semester</th>
                         <th>Actions</th>
                     </tr>
@@ -88,7 +91,7 @@
                         <td>{{ subject.name }}</td>
                         <td class="hide-mobile">{{ subject.course.code }}</td>
                         <td class="hide-mobile">{{ subject.units }}</td>
-                        <td class="hide-mobile">Year {{ subject.year_level }}</td>
+                        <td class="hide-mobile">{{ subject.enrollments.count }}</td>
                         <td class="hide-mobile">{{ subject.get_semester_display }}</td>
                         <td>
                             <a href="{% url 'courses:subject_students' subject.id %}" class="btn-primary" style="padding: 0.25rem 0.75rem; font-size: 0.875rem;">View Students</a>

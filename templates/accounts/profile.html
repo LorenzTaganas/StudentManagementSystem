@@ -1,0 +1,459 @@
+{% extends 'base.html' %}
+
+{% block title %}My Profile - Acadex{% endblock %}
+
+{% block extra_css %}
+<style>
+.profile-sidebar-card { height: fit-content; }
+
+.profile-picture-container {
+    position: relative;
+    width: 140px;
+    height: 140px;
+    margin: 0 auto 1rem;
+    cursor: pointer;
+}
+
+.profile-picture-container:hover .picture-overlay { opacity: 1; }
+
+.picture-overlay {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s;
+    color: white;
+    font-size: 1.1rem;
+    text-align: center;
+}
+
+.profile-menu {
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--bg-card-solid);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-lg);
+    min-width: 200px;
+    z-index: 1000;
+    display: none;
+    margin-top: 10px;
+    overflow: hidden;
+}
+
+.profile-menu.show { display: block; }
+
+.profile-menu::before {
+    content: '';
+    position: absolute;
+    top: -6px;
+    left: 50%;
+    transform: translateX(-50%) rotate(45deg);
+    width: 12px;
+    height: 12px;
+    background: var(--bg-card-solid);
+    border-left: 1px solid var(--border);
+    border-top: 1px solid var(--border);
+}
+
+.profile-menu-item {
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    transition: background 0.2s;
+    color: var(--text-primary);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    border: none;
+    background: none;
+    width: 100%;
+    text-align: left;
+    font-size: 0.9rem;
+    font-family: 'Inter', sans-serif;
+}
+.profile-menu-item:hover { background: rgba(178,196,216,0.08); }
+
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+.sidebar-menu {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    margin-top: 1.75rem;
+}
+
+.sidebar-menu-item {
+    padding: 0.7rem 1rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    text-align: left;
+    cursor: pointer;
+    border-radius: var(--radius-sm);
+    transition: all 0.22s;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    text-decoration: none;
+    display: block;
+    font-family: 'Inter', sans-serif;
+    font-weight: 500;
+    width: 100%;
+}
+.sidebar-menu-item:hover {
+    background: rgba(178,196,216,0.08);
+    color: var(--silver-light);
+    border-color: var(--border-hover);
+}
+.sidebar-menu-item.active {
+    background: linear-gradient(135deg, var(--blue) 0%, var(--blue-hover) 100%);
+    color: white;
+    border-color: transparent;
+    box-shadow: 0 2px 10px rgba(44,61,127,0.35);
+}
+
+@media (max-width: 768px) {
+    .profile-grid { grid-template-columns: 1fr !important; gap: 1rem !important; }
+    .form-grid-2col { grid-template-columns: 1fr !important; }
+    .profile-sidebar-card { margin-bottom: 1rem; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<h1 style="font-size: 1.6rem; font-weight: 800; color: var(--silver-light); margin-bottom: 1.5rem;">My Profile</h1>
+
+<div class="profile-grid" style="display: grid; grid-template-columns: 280px 1fr; gap: 2rem;">
+    <!-- Left Sidebar -->
+    <div>
+        <div class="card profile-sidebar-card">
+            <div class="card-body text-center">
+                <!-- Profile Picture with Menu -->
+                <form method="post" enctype="multipart/form-data" id="pictureForm" style="display: none;">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="update_profile">
+                    <input type="file" name="profile_picture" id="profile_picture" accept="image/*" onchange="this.form.submit()">
+                </form>
+                
+                <div style="position: relative; display: inline-block;">
+                    <div class="profile-picture-container" onclick="toggleProfileMenu()">
+                        {% if user.profile_picture %}
+                            <img src="{{ user.profile_picture.url }}" alt="Profile Picture" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover; display: block; border: 3px solid var(--blue); box-shadow: 0 4px 20px rgba(44,61,127,0.4);">
+                        {% else %}
+                            <div style="width: 100%; height: 100%; border-radius: 50%; background: linear-gradient(135deg, var(--blue) 0%, var(--teal) 100%); display: flex; align-items: center; justify-content: center; font-size: 3rem; color: white; font-weight: 800; box-shadow: 0 4px 20px rgba(44,61,127,0.4);">
+                                {% if user.first_name and user.last_name %}
+                                    {{ user.first_name.0|upper }}{{ user.last_name.0|upper }}
+                                {% else %}
+                                    {{ user.username.0|upper }}
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                        <div class="picture-overlay">
+                            <span style="font-size: 0.85rem; font-weight: 600;">Edit Photo</span>
+                        </div>
+                    </div>
+                    
+                    <div class="profile-menu" id="profileMenu">
+                        <button class="profile-menu-item" onclick="document.getElementById('profile_picture').click(); toggleProfileMenu();">
+                            Change profile picture
+                        </button>
+                        {% if user.profile_picture %}
+                        <form method="post" id="removePhotoForm" style="margin: 0;">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="remove_photo">
+                            <button type="submit" class="profile-menu-item" style="color: var(--danger);">
+                                Remove photo
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <h3 style="margin-top: 1rem; font-size: 1.1rem; color: var(--silver-light); font-weight: 700;">{{ user.get_full_name|default:user.username }}</h3>
+                <p class="badge {% if user.is_student %}badge-student{% elif user.is_instructor %}badge-instructor{% else %}badge-admin{% endif %}" style="margin-top: 0.5rem; display: inline-block;">
+                    {{ user.get_role_display }}
+                </p>
+                {% if user.is_student and user.student_profile %}
+                    <p style="color: var(--text-muted); font-size: 0.83rem; margin-top: 0.5rem;">Student ID: {{ user.student_profile.student_id }}</p>
+                {% elif user.is_instructor and user.instructor_profile %}
+                    <p style="color: var(--text-muted); font-size: 0.83rem; margin-top: 0.5rem;">Employee ID: {{ user.instructor_profile.employee_id }}</p>
+                {% else %}
+                    <p style="color: var(--text-muted); font-size: 0.83rem; margin-top: 0.5rem;">@{{ user.username }}</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Navigation Menu -->
+        <div class="sidebar-menu">
+            <button class="sidebar-menu-item active" onclick="switchTab('information', this)">
+                ▸ Information
+            </button>
+            <button class="sidebar-menu-item" onclick="switchTab('password', this)">
+                ▸ Change Password
+            </button>
+        </div>
+    </div>
+
+    <!-- Right Content Area -->
+    <div>
+        <!-- Information Tab -->
+        <div id="information" class="tab-content active">
+            <div class="card">
+                <div class="card-header">
+                    <h2>Personal Information</h2>
+                </div>
+                <div class="card-body">
+                    <form method="post" id="profileForm" novalidate>
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="update_profile">
+                        
+                        <div class="form-grid-2col" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                            <div class="form-group" style="grid-column: 1 / 3;">
+                                <label for="username">Username</label>
+                                <input type="text" id="username" name="username" value="{{ user.username }}" readonly style="background: rgba(38,38,65,0.4); cursor: not-allowed;">
+                                <span class="error-message" id="username_error"></span>
+                            </div>
+                            <div class="form-group" style="grid-column: 1 / 2;">
+                                <label for="first_name">First Name</label>
+                                <input type="text" id="first_name" name="first_name" value="{{ user.first_name }}" required>
+                                <span class="error-message" id="first_name_error"></span>
+                            </div>
+                            <div class="form-group" style="grid-column: 2 / 3;">
+                                <label for="last_name">Last Name</label>
+                                <input type="text" id="last_name" name="last_name" value="{{ user.last_name }}" required>
+                                <span class="error-message" id="last_name_error"></span>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="email">Email Address</label>
+                            <input type="email" id="email" name="email" value="{{ user.email }}" required>
+                            <span class="error-message" id="email_error"></span>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="phone_number">Phone Number</label>
+                            <input type="text" id="phone_number" name="phone_number" value="{{ user.phone_number|default:'' }}" placeholder="09123456789 or +639123456789" pattern="^(09|\+639)\d{9}$">
+                            <small>Format: 09123456789 or +639123456789</small>
+                            <span class="error-message" id="phone_error"></span>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="address">Address</label>
+                            <textarea id="address" name="address" rows="3" placeholder="Enter your complete address">{{ user.address|default:'' }}</textarea>
+                        </div>
+                        
+                        <button type="submit" class="btn-primary">Save Changes</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Change Password Tab -->
+        <div id="password" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <h2>Change Password</h2>
+                </div>
+                <div class="card-body">
+                    <form method="post" id="passwordForm" novalidate>
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="change_password">
+                        
+                        <div class="form-group">
+                            <label for="old_password">Current Password</label>
+                            <input type="password" id="old_password" name="old_password" required>
+                            <span class="error-message" id="old_password_error"></span>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="new_password">New Password</label>
+                            <input type="password" id="new_password" name="new_password" required minlength="8">
+                            <small>Must be 8+ characters with 1 uppercase, 1 number, and 1 special character</small>
+                            <span class="error-message" id="new_password_error"></span>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="confirm_password">Confirm New Password</label>
+                            <input type="password" id="confirm_password" name="confirm_password" required minlength="8">
+                            <span class="error-message" id="confirm_password_error"></span>
+                        </div>
+                        
+                        <button type="submit" class="btn-primary">Update Password</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleProfileMenu() {
+    const menu = document.getElementById('profileMenu');
+    menu.classList.toggle('show');
+}
+
+window.addEventListener('click', function(e) {
+    const container = document.querySelector('.profile-picture-container');
+    const menu = document.getElementById('profileMenu');
+    if (menu && container && !container.contains(e.target) && !menu.contains(e.target)) {
+        menu.classList.remove('show');
+    }
+});
+
+function switchTab(tabName, clickedBtn) {
+    document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+    document.querySelectorAll('.sidebar-menu-item').forEach(item => item.classList.remove('active'));
+    document.getElementById(tabName).classList.add('active');
+    if (clickedBtn) clickedBtn.classList.add('active');
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const profileForm = document.getElementById('profileForm');
+    const passwordForm = document.getElementById('passwordForm');
+    const phoneInput = document.getElementById('phone_number');
+    const phoneError = document.getElementById('phone_error');
+    const emailInput = document.getElementById('email');
+    const firstNameInput = document.getElementById('first_name');
+    const lastNameInput = document.getElementById('last_name');
+
+    if (profileForm) {
+        profileForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            let isValid = true;
+
+            document.querySelectorAll('#profileForm .error-message').forEach(err => { err.style.display = 'none'; err.textContent = ''; });
+            document.querySelectorAll('#profileForm input').forEach(input => input.classList.remove('error'));
+
+            if (!firstNameInput.value.trim()) {
+                document.getElementById('first_name_error').textContent = 'First name is required';
+                document.getElementById('first_name_error').style.display = 'block';
+                firstNameInput.classList.add('error'); isValid = false;
+            } else if (/\d/.test(firstNameInput.value)) {
+                document.getElementById('first_name_error').textContent = 'Name cannot contain numbers';
+                document.getElementById('first_name_error').style.display = 'block';
+                firstNameInput.classList.add('error'); isValid = false;
+            }
+
+            if (!lastNameInput.value.trim()) {
+                document.getElementById('last_name_error').textContent = 'Last name is required';
+                document.getElementById('last_name_error').style.display = 'block';
+                lastNameInput.classList.add('error'); isValid = false;
+            } else if (/\d/.test(lastNameInput.value)) {
+                document.getElementById('last_name_error').textContent = 'Name cannot contain numbers';
+                document.getElementById('last_name_error').style.display = 'block';
+                lastNameInput.classList.add('error'); isValid = false;
+            }
+
+            const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailInput.value.trim()) {
+                document.getElementById('email_error').textContent = 'Email is required';
+                document.getElementById('email_error').style.display = 'block';
+                emailInput.classList.add('error'); isValid = false;
+            } else if (!emailPattern.test(emailInput.value)) {
+                document.getElementById('email_error').textContent = 'Please enter a valid email address';
+                document.getElementById('email_error').style.display = 'block';
+                emailInput.classList.add('error'); isValid = false;
+            }
+
+            const phonePattern = /^(09|\+639)\d{9}$/;
+            const phoneValue = phoneInput.value.trim();
+            if (phoneValue && !phonePattern.test(phoneValue)) {
+                phoneError.textContent = 'Invalid phone number. Use format: 09123456789 or +639123456789';
+                phoneError.style.display = 'block';
+                phoneInput.classList.add('error'); isValid = false;
+            }
+
+            if (isValid) profileForm.submit();
+        });
+
+        [firstNameInput, lastNameInput, emailInput, phoneInput].forEach(input => {
+            if (input) {
+                input.addEventListener('input', function() {
+                    const errorId = this.id + '_error';
+                    const errorElement = document.getElementById(errorId);
+                    if (errorElement && this.value.trim()) {
+                        errorElement.style.display = 'none';
+                        this.classList.remove('error');
+                    }
+                });
+            }
+        });
+    }
+
+    if (passwordForm) {
+        const oldPasswordInput = document.getElementById('old_password');
+        const newPasswordInput = document.getElementById('new_password');
+        const confirmPasswordInput = document.getElementById('confirm_password');
+
+        passwordForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            let isValid = true;
+
+            document.querySelectorAll('#passwordForm .error-message').forEach(err => { err.style.display = 'none'; err.textContent = ''; });
+            document.querySelectorAll('#passwordForm input').forEach(input => input.classList.remove('error'));
+
+            if (!oldPasswordInput.value) {
+                document.getElementById('old_password_error').textContent = 'Current password is required';
+                document.getElementById('old_password_error').style.display = 'block';
+                oldPasswordInput.classList.add('error'); isValid = false;
+            }
+
+            const passwordPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+            if (!newPasswordInput.value) {
+                document.getElementById('new_password_error').textContent = 'New password is required';
+                document.getElementById('new_password_error').style.display = 'block';
+                newPasswordInput.classList.add('error'); isValid = false;
+            } else if (!passwordPattern.test(newPasswordInput.value)) {
+                document.getElementById('new_password_error').textContent = 'Password must be 8+ characters with 1 uppercase, 1 number, and 1 special character (@$!%*?&)';
+                document.getElementById('new_password_error').style.display = 'block';
+                newPasswordInput.classList.add('error'); isValid = false;
+            }
+
+            if (!confirmPasswordInput.value) {
+                document.getElementById('confirm_password_error').textContent = 'Please confirm your new password';
+                document.getElementById('confirm_password_error').style.display = 'block';
+                confirmPasswordInput.classList.add('error'); isValid = false;
+            } else if (newPasswordInput.value !== confirmPasswordInput.value) {
+                document.getElementById('confirm_password_error').textContent = 'Passwords do not match';
+                document.getElementById('confirm_password_error').style.display = 'block';
+                confirmPasswordInput.classList.add('error'); isValid = false;
+            }
+
+            if (isValid) passwordForm.submit();
+        });
+
+        [oldPasswordInput, newPasswordInput, confirmPasswordInput].forEach(input => {
+            if (input) {
+                input.addEventListener('input', function() {
+                    const errorId = this.id + '_error';
+                    const errorElement = document.getElementById(errorId);
+                    if (errorElement && this.value) {
+                        errorElement.style.display = 'none';
+                        this.classList.remove('error');
+                    }
+                });
+            }
+        });
+
+        if (confirmPasswordInput && newPasswordInput) {
+            confirmPasswordInput.addEventListener('input', function() {
+                if (this.value && newPasswordInput.value !== this.value) {
+                    document.getElementById('confirm_password_error').textContent = 'Passwords do not match';
+                    document.getElementById('confirm_password_error').style.display = 'block';
+                    this.classList.add('error');
+                }
+            });
+        }
+    }
+});
+</script>
+
+{% endblock %}

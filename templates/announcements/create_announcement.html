@@ -1,0 +1,151 @@
+{% extends 'base.html' %}
+
+{% block title %}Create Announcement — Acadex{% endblock %}
+
+{% block content %}
+<a href="{% url 'accounts:dashboard' %}" class="back-link">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+    Back to Dashboard
+</a>
+
+<div style="margin-bottom:1.75rem;">
+    <h1 style="font-size:1.6rem; font-weight:800; color:var(--text-white); margin-bottom:0.3rem;">
+        Create New Announcement
+    </h1>
+    <p style="color:var(--text-muted); font-size:0.875rem;">Post a system-wide or course-specific announcement</p>
+</div>
+
+<div class="form-section">
+    <form method="post" id="announcementForm" novalidate>
+        {% csrf_token %}
+
+        <div class="form-group">
+            <label for="title">
+                Announcement Title
+                <span style="color:var(--danger);">*</span>
+            </label>
+            <div class="input-group">
+                <input type="text" id="title" name="title" required placeholder="Enter a clear, descriptive title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                    <polyline points="22,6 12,13 2,6"/>
+                </svg>
+            </div>
+            <span class="error-message" id="title_error"></span>
+        </div>
+
+        <div class="form-group">
+            <label for="content">
+                Content
+                <span style="color:var(--danger);">*</span>
+            </label>
+            <textarea id="content" name="content" rows="8" required placeholder="Write your announcement content here..."></textarea>
+            <span class="error-message" id="content_error"></span>
+        </div>
+
+        <div class="form-group">
+            <label>Announcement Type <span style="color:var(--danger);">*</span></label>
+            <div class="radio-group">
+                <div class="radio-option">
+                    <input type="radio" id="type_system" name="announcement_type" value="system" checked onchange="toggleSubjectField()">
+                    <label for="type_system">System-wide (visible to all students)</label>
+                </div>
+                <div class="radio-option">
+                    <input type="radio" id="type_course" name="announcement_type" value="course" onchange="toggleSubjectField()">
+                    <label for="type_course">Course-specific (one subject only)</label>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group" id="subject_field" style="display:none;">
+            <label for="subject">Select Subject <span style="color:var(--danger);">*</span></label>
+            <select id="subject" name="subject">
+                <option value="">— Select a subject —</option>
+                {% for subject in subjects %}
+                    <option value="{{ subject.id }}">{{ subject.code }} — {{ subject.name }}</option>
+                {% endfor %}
+            </select>
+            <span class="error-message" id="subject_error"></span>
+        </div>
+
+        <div class="form-group">
+            <label class="checkbox-label">
+                <input type="checkbox" name="is_active" checked>
+                <span>Active (visible to students immediately)</span>
+            </label>
+        </div>
+
+        <div style="display:flex; gap:1rem; margin-top:2rem; flex-wrap:wrap;">
+            <button type="submit" class="btn-primary" style="flex:1; min-width:140px; padding:0.8rem;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;">
+                    <path d="M22 2L11 13"/><path d="M22 2L15 22l-4-9-9-4 20-7z"/>
+                </svg>
+                Publish Announcement
+            </button>
+            <a href="{% url 'accounts:dashboard' %}" class="btn-secondary" style="flex:1; min-width:140px; text-align:center; padding:0.8rem;">
+                Cancel
+            </a>
+        </div>
+    </form>
+</div>
+
+<script>
+function toggleSubjectField() {
+    const courseRadio = document.getElementById('type_course');
+    const subjectField = document.getElementById('subject_field');
+    const subjectSelect = document.getElementById('subject');
+    if (courseRadio.checked) {
+        subjectField.style.display = 'block';
+        subjectSelect.required = true;
+    } else {
+        subjectField.style.display = 'none';
+        subjectSelect.required = false;
+        subjectSelect.value = '';
+    }
+}
+
+document.getElementById('announcementForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    let isValid = true;
+    document.querySelectorAll('.error-message').forEach(err => { err.style.display = 'none'; err.textContent = ''; });
+    document.querySelectorAll('input, textarea, select').forEach(inp => inp.classList.remove('error'));
+
+    const title = document.getElementById('title');
+    if (!title.value.trim()) {
+        document.getElementById('title_error').textContent = 'Title is required';
+        document.getElementById('title_error').style.display = 'block';
+        title.classList.add('error');
+        isValid = false;
+    }
+
+    const content = document.getElementById('content');
+    if (!content.value.trim()) {
+        document.getElementById('content_error').textContent = 'Content is required';
+        document.getElementById('content_error').style.display = 'block';
+        content.classList.add('error');
+        isValid = false;
+    }
+
+    const courseRadio = document.getElementById('type_course');
+    const subject = document.getElementById('subject');
+    if (courseRadio.checked && !subject.value) {
+        document.getElementById('subject_error').textContent = 'Please select a subject';
+        document.getElementById('subject_error').style.display = 'block';
+        subject.classList.add('error');
+        isValid = false;
+    }
+
+    if (isValid) this.submit();
+});
+
+['title', 'content', 'subject'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+        el.addEventListener('input', function() {
+            const err = document.getElementById(this.id + '_error');
+            if (err && this.value.trim()) { err.style.display = 'none'; this.classList.remove('error'); }
+        });
+    }
+});
+</script>
+{% endblock %}

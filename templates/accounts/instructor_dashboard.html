@@ -1,0 +1,194 @@
+{% extends 'base.html' %}
+
+{% block title %}Instructor Dashboard — Acadex{% endblock %}
+
+{% block content %}
+<!-- Welcome Banner -->
+<div class="welcome-banner">
+    {% if user.profile_picture %}
+        <img src="{{ user.profile_picture.url }}" alt="Profile" class="welcome-avatar" style="object-fit:cover;">
+    {% else %}
+        <div class="welcome-avatar">
+            {% if user.first_name and user.last_name %}
+                {{ user.first_name.0|upper }}{{ user.last_name.0|upper }}
+            {% else %}
+                {{ user.username.0|upper }}
+            {% endif %}
+        </div>
+    {% endif %}
+    <div class="welcome-text" style="flex:1;">
+        <h1>Welcome back, {{ user.get_full_name|default:user.username }}! 👋</h1>
+        <p>Instructor Dashboard — manage your subjects and announcements.</p>
+    </div>
+    <div style="display:flex; gap:0.75rem; flex-wrap:wrap; position:relative; z-index:1;">
+        <a href="{% url 'announcements:create_announcement' %}" class="btn-primary">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            New Announcement
+        </a>
+    </div>
+</div>
+
+<!-- Stats Cards -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-card-icon indigo">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M4 19.5A2.5 2.5 0 016.5 17H20"/>
+                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/>
+            </svg>
+        </div>
+        <h3>My Subjects</h3>
+        <div class="stat-value">{{ total_subjects }}</div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-card-icon teal">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
+                <circle cx="9" cy="7" r="4"/>
+                <path d="M23 21v-2a4 4 0 00-3-3.87"/>
+                <path d="M16 3.13a4 4 0 010 7.75"/>
+            </svg>
+        </div>
+        <h3>Total Students</h3>
+        <div class="stat-value" style="color:var(--teal);">{{ total_students }}</div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-card-icon warning">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                <path d="M13.73 21a2 2 0 01-3.46 0"/>
+            </svg>
+        </div>
+        <h3>Announcements</h3>
+        <div class="stat-value" style="color:var(--warning);">{{ announcements.count }}</div>
+    </div>
+</div>
+
+<!-- My Subjects -->
+<div class="card">
+    <div class="card-header">
+        <h2>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M4 19.5A2.5 2.5 0 016.5 17H20"/>
+                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/>
+            </svg>
+            My Subjects
+        </h2>
+        <a href="{% url 'courses:subject_list' %}" class="btn-secondary">View All</a>
+    </div>
+    <div class="card-body">
+        {% if subjects %}
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Code</th>
+                            <th>Subject Name</th>
+                            <th class="hide-mobile">Course</th>
+                            <th class="hide-mobile">Units</th>
+                            <th class="hide-mobile">Students</th>
+                            <th class="hide-mobile">Semester</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for subject in subjects %}
+                        <tr>
+                            <td><strong style="color:var(--indigo);">{{ subject.code }}</strong></td>
+                            <td><span style="color:var(--text-primary); font-weight:500;">{{ subject.name }}</span></td>
+                            <td class="hide-mobile">
+                                <span class="type-badge" style="background:rgba(79,110,247,0.1);color:var(--indigo);border:1px solid rgba(79,110,247,0.2);">{{ subject.course.code }}</span>
+                            </td>
+                            <td class="hide-mobile">{{ subject.units }}</td>
+                            <td class="hide-mobile">
+                                <span class="type-badge status-active">{{ subject.enrollments.count }}</span>
+                            </td>
+                            <td class="hide-mobile"><span style="color:var(--text-muted);">{{ subject.get_semester_display }}</span></td>
+                            <td>
+                                <a href="{% url 'courses:subject_students' subject.id %}" class="action-btn btn-edit">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
+                                        <circle cx="9" cy="7" r="4"/>
+                                    </svg>
+                                    Students
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <div class="empty-icon">📚</div>
+                <h3>No Subjects Assigned</h3>
+                <p>No subjects have been assigned to you yet. Please contact your administrator.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Recent Announcements -->
+<div class="card">
+    <div class="card-header">
+        <h2>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                <path d="M13.73 21a2 2 0 01-3.46 0"/>
+            </svg>
+            My Recent Announcements
+        </h2>
+        <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+            <a href="{% url 'announcements:my_announcements' %}" class="btn-secondary">View All</a>
+            <a href="{% url 'announcements:create_announcement' %}" class="btn-primary">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Create New
+            </a>
+        </div>
+    </div>
+    <div class="card-body">
+        {% if announcements %}
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Type</th>
+                            <th class="hide-mobile">Subject</th>
+                            <th class="hide-mobile">Date</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for announcement in announcements|slice:":5" %}
+                        <tr>
+                            <td><strong style="color:var(--text-primary);">{{ announcement.title }}</strong></td>
+                            <td>
+                                <span class="type-badge {% if announcement.announcement_type == 'system' %}type-system{% else %}type-course{% endif %}">
+                                    {% if announcement.announcement_type == 'system' %}System-wide{% else %}Course{% endif %}
+                                </span>
+                            </td>
+                            <td class="hide-mobile">{{ announcement.subject.code|default:"—" }}</td>
+                            <td class="hide-mobile"><span style="color:var(--text-muted);">{{ announcement.created_at|date:"M d, Y" }}</span></td>
+                            <td>
+                                <span class="type-badge {% if announcement.is_active %}status-active{% else %}status-inactive{% endif %}">
+                                    {% if announcement.is_active %}Active{% else %}Inactive{% endif %}
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <div class="empty-icon">📢</div>
+                <h3>No Announcements Yet</h3>
+                <p>You haven't posted any announcements. <a href="{% url 'announcements:create_announcement' %}" style="color:var(--indigo);">Create your first one!</a></p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

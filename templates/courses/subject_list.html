@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+
+{% block title %}My Subjects — Acadex{% endblock %}
+
+{% block content %}
+<a href="{% url 'accounts:dashboard' %}" class="back-link">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+    Back to Dashboard
+</a>
+
+<div class="subjects-header">
+    <div style="position:relative; z-index:1;">
+        <h1 style="margin:0; font-size:1.8rem; font-weight:800;">
+            📚 {% if user.is_student %}My Enrolled Subjects{% else %}My Assigned Subjects{% endif %}
+        </h1>
+        <p style="margin:0.4rem 0 0; opacity:0.8; font-size:0.92rem;">
+            {% if user.is_student %}All subjects you are currently enrolled in{% else %}All subjects currently assigned to you{% endif %}
+        </p>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h2>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M4 19.5A2.5 2.5 0 016.5 17H20"/>
+                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/>
+            </svg>
+            {% if user.is_student %}Subjects You're Enrolled In{% else %}Subjects Assigned to You{% endif %}
+        </h2>
+    </div>
+    <div class="card-body">
+        {% if subjects %}
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Code</th>
+                            <th>Name</th>
+                            <th>Course</th>
+                            <th>Units</th>
+                            <th>Students</th>
+                            <th>Semester</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for subject in subjects %}
+                        <tr>
+                            <td><strong style="color:var(--indigo);">{{ subject.code }}</strong></td>
+                            <td><span style="color:var(--text-primary); font-weight:500;">{{ subject.name }}</span></td>
+                            <td>
+                                <span class="type-badge" style="background:rgba(79,110,247,0.1);color:var(--indigo);border:1px solid rgba(79,110,247,0.2);">
+                                    {{ subject.course.code }}
+                                </span>
+                            </td>
+                            <td>{{ subject.units }}</td>
+                            <td>
+                                <span class="status-badge status-active">{{ subject.enrollments.count }}</span>
+                            </td>
+                            <td><span style="color:var(--text-muted);">{{ subject.get_semester_display }}</span></td>
+                            <td>
+                                <a href="{% url 'courses:subject_students' subject.id %}" class="action-btn btn-edit">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
+                                        <circle cx="9" cy="7" r="4"/>
+                                    </svg>
+                                    View Students
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <div class="empty-icon">📚</div>
+                <h3>No Subjects Assigned</h3>
+                <p>You don't have any subjects assigned yet. Please contact your administrator.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

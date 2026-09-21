@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+
+{% block title %}All Announcements - Acadex{% endblock %}
+
+{% block content %}
+<a href="{% url 'accounts:student_dashboard' %}" class="back-link">← Back to Dashboard</a>
+
+<div class="announcements-header">
+    <h1 style="margin: 0; font-size: 1.7rem; font-weight: 800;">All Announcements</h1>
+    <p style="margin: 0.4rem 0 0 0; opacity: 0.8; font-size: 0.92rem;">System-wide and course-specific announcements</p>
+</div>
+
+{% if announcements %}
+    {% for announcement in announcements %}
+    <div class="announcement-card {% if announcement.announcement_type == 'system' %}system{% else %}course{% endif %}">
+        <div class="announcement-header">
+            <div style="flex: 1;">
+                <h3 class="announcement-title">{{ announcement.title }}</h3>
+                <div class="announcement-meta">
+                    <span class="type-badge {% if announcement.announcement_type == 'system' %}type-system{% else %}type-course{% endif %}">
+                        {{ announcement.get_announcement_type_display }}
+                    </span>
+                    {% if announcement.subject %}
+                        <span style="background: var(--blue); color: white; padding: 0.15rem 0.6rem; border-radius: 4px; font-size: 0.78rem; font-weight: 600;">{{ announcement.subject.code }} — {{ announcement.subject.name }}</span>
+                    {% endif %}
+                    <span>{{ announcement.created_at|date:"M d, Y g:i A" }}</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="announcement-content">
+            {{ announcement.content|linebreaks }}
+        </div>
+        
+        <div class="announcement-footer">
+            <span>By: {{ announcement.created_by.get_full_name|default:announcement.created_by.username }}</span>
+            {% if announcement.updated_at != announcement.created_at %}
+                <span>Updated: {{ announcement.updated_at|date:"M d, Y" }}</span>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+{% else %}
+    <div class="card">
+        <div class="card-body">
+            <div class="empty-state">
+                <div class="empty-icon">📢</div>
+                <h3>No Announcements Yet</h3>
+                <p>There are no active announcements at this time. Check back later for updates!</p>
+            </div>
+        </div>
+    </div>
+{% endif %}
+{% endblock %}

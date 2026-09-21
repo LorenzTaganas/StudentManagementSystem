@@ -1,0 +1,162 @@
+{% extends 'base.html' %}
+
+{% block title %}My Academic Grades — Acadex{% endblock %}
+
+{% block content %}
+<a href="{% url 'accounts:student_dashboard' %}" class="back-link">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+    Back to Dashboard
+</a>
+
+<div class="grades-header">
+    <div style="position:relative; z-index:1;">
+        <h1 style="margin:0; font-size:1.8rem; font-weight:800;">📊 My Academic Grades</h1>
+        <p style="margin:0.4rem 0 0; opacity:0.8; font-size:0.92rem;">Complete grade report with instructor feedback</p>
+    </div>
+
+    <div class="grades-stats">
+        <div class="stat-box">
+            <div class="stat-label">Current GPA</div>
+            <div class="stat-number">{{ gpa|floatformat:2 }}</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-label">Total Subjects</div>
+            <div class="stat-number">{{ total_subjects }}</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-label">Passed</div>
+            <div class="stat-number" style="color:#34d399;">{{ passed }}</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-label">Failed</div>
+            <div class="stat-number" style="color:var(--danger);">{{ failed }}</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-label">Incomplete</div>
+            <div class="stat-number" style="color:var(--warning);">{{ incomplete }}</div>
+        </div>
+    </div>
+</div>
+
+{% if grades %}
+    {% for grade in grades %}
+    <div class="grade-card {% if grade.letter_grade and grade.letter_grade != '5.00' %}passed{% elif grade.letter_grade == '5.00' %}failed{% else %}incomplete{% endif %}">
+        <div class="grade-card-header">
+            <div class="subject-info" style="display:flex; flex-direction:column; gap:0;">
+                <h3 style="margin:0; font-size:1.1rem; font-weight:700; color:var(--text-primary);">
+                    {{ grade.enrollment.subject.code }} — {{ grade.enrollment.subject.name }}
+                </h3>
+                <div class="subject-meta">
+                    <span class="meta-pill">{{ grade.enrollment.subject.course.code }}</span>
+                    <span class="meta-pill">{{ grade.enrollment.subject.units }} units</span>
+                    <span class="meta-pill">{{ grade.enrollment.subject.get_semester_display }}</span>
+                    <span class="meta-pill">Year {{ grade.enrollment.subject.year_level }}</span>
+                    <span>👤 {{ grade.enrollment.subject.instructor.get_full_name|default:"No instructor" }}</span>
+                </div>
+            </div>
+            <div style="text-align:right; flex-shrink:0; margin-left:1rem;">
+                {% if grade.letter_grade %}
+                    <div class="grade-badge">{{ grade.letter_grade }}</div>
+                    {% if grade.letter_grade != '5.00' %}
+                        <span class="status-badge status-passed" style="margin-top:0.5rem; display:inline-block;">✓ Passed</span>
+                    {% else %}
+                        <span class="status-badge status-failed" style="margin-top:0.5rem; display:inline-block;">✗ Failed</span>
+                    {% endif %}
+                {% else %}
+                    <span class="status-badge status-incomplete">⊙ Incomplete</span>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="grade-details">
+            <div class="grade-item">
+                <div class="grade-item-label">Prelim ({{ grade.prelim_weight }}%)</div>
+                <div class="grade-item-value">{{ grade.prelim_grade|default:"—" }}</div>
+            </div>
+            <div class="grade-item">
+                <div class="grade-item-label">Midterm ({{ grade.midterm_weight }}%)</div>
+                <div class="grade-item-value">{{ grade.midterm_grade|default:"—" }}</div>
+            </div>
+            <div class="grade-item">
+                <div class="grade-item-label">Final ({{ grade.final_weight }}%)</div>
+                <div class="grade-item-value">{{ grade.final_grade|default:"—" }}</div>
+            </div>
+            <div class="grade-item" style="background:rgba(79,110,247,0.1); border-color:rgba(79,110,247,0.2);">
+                <div class="grade-item-label">Weighted Avg</div>
+                <div class="grade-item-value highlight">{{ grade.weighted_average|default:"—" }}</div>
+            </div>
+            <div class="grade-item" style="background:rgba(79,110,247,0.1); border-color:rgba(79,110,247,0.2);">
+                <div class="grade-item-label">Grade Point</div>
+                <div class="grade-item-value highlight">{{ grade.grade_point|default:"—" }}</div>
+            </div>
+        </div>
+
+        {% if grade.remarks %}
+            <div class="instructor-remarks">
+                <div class="remarks-header">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;display:inline;margin-right:4px;">
+                        <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
+                    </svg>
+                    Instructor's Remarks
+                </div>
+                <div class="remarks-content">{{ grade.remarks }}</div>
+            </div>
+        {% else %}
+            <div class="instructor-remarks" style="background:rgba(255,255,255,0.02); border-left-color:var(--border);">
+                <div class="no-remarks">No remarks from instructor</div>
+            </div>
+        {% endif %}
+    </div>
+    {% endfor %}
+{% else %}
+    <div class="card">
+        <div class="card-body">
+            <div class="empty-state">
+                <div class="empty-icon">📊</div>
+                <h3>No Grades Yet</h3>
+                <p>You don't have any grades recorded yet. Grades will appear here once your instructors submit them.</p>
+            </div>
+        </div>
+    </div>
+{% endif %}
+
+{% if grades %}
+<div class="card">
+    <div class="card-header">
+        <h2>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            Grading System Reference
+        </h2>
+    </div>
+    <div class="card-body">
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:2rem;">
+            <div>
+                <h3 style="margin-bottom:1rem; color:var(--text-secondary); font-size:0.82rem; text-transform:uppercase; letter-spacing:0.6px; font-weight:700;">Grade Weights</h3>
+                <table>
+                    <tr><td style="color:var(--text-secondary);">Prelim:</td><td style="text-align:right; font-weight:700; color:var(--indigo);">{{ grades.0.prelim_weight }}%</td></tr>
+                    <tr><td style="color:var(--text-secondary);">Midterm:</td><td style="text-align:right; font-weight:700; color:var(--indigo);">{{ grades.0.midterm_weight }}%</td></tr>
+                    <tr><td style="color:var(--text-secondary);">Final:</td><td style="text-align:right; font-weight:700; color:var(--indigo);">{{ grades.0.final_weight }}%</td></tr>
+                </table>
+            </div>
+            <div>
+                <h3 style="margin-bottom:1rem; color:var(--text-secondary); font-size:0.82rem; text-transform:uppercase; letter-spacing:0.6px; font-weight:700;">Grading Scale</h3>
+                <table class="grade-scale-table" style="font-size:0.83rem;">
+                    <tr><td>97–100</td><td style="text-align:right; font-weight:700; color:#34d399;">1.00</td></tr>
+                    <tr><td>94–96</td><td style="text-align:right; font-weight:700;">1.25</td></tr>
+                    <tr><td>91–93</td><td style="text-align:right; font-weight:700;">1.50</td></tr>
+                    <tr><td>88–90</td><td style="text-align:right; font-weight:700;">1.75</td></tr>
+                    <tr><td>85–87</td><td style="text-align:right; font-weight:700;">2.00</td></tr>
+                    <tr><td>82–84</td><td style="text-align:right; font-weight:700;">2.25</td></tr>
+                    <tr><td>79–81</td><td style="text-align:right; font-weight:700;">2.50</td></tr>
+                    <tr><td>76–78</td><td style="text-align:right; font-weight:700;">2.75</td></tr>
+                    <tr><td>75</td><td style="text-align:right; font-weight:700; color:#34d399;">3.00 (Passing)</td></tr>
+                    <tr><td style="color:var(--danger);">Below 75</td><td style="text-align:right; font-weight:700; color:var(--danger);">5.00 (Failed)</td></tr>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

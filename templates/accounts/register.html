@@ -1,0 +1,398 @@
+{% extends 'base.html' %}
+
+{% block title %}Create Account — Acadex{% endblock %}
+
+{% block extra_css %}
+<style>
+.auth-wrapper {
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 2.5rem 0 3rem;
+    animation: fadeIn 0.4s ease;
+}
+
+.auth-card {
+    background: var(--bg-card-solid);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl);
+    width: 100%;
+    max-width: 620px;
+    box-shadow: var(--shadow-xl);
+    overflow: hidden;
+    animation: slideUp 0.45s ease;
+}
+
+.auth-header {
+    background: linear-gradient(135deg, var(--indigo-deeper) 0%, var(--indigo) 50%, var(--purple) 100%);
+    padding: 2.25rem 2.25rem 2rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.auth-header::before {
+    content: '';
+    position: absolute;
+    top: -60px; right: -60px;
+    width: 200px; height: 200px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.07);
+}
+
+.auth-header::after {
+    content: '';
+    position: absolute;
+    bottom: -50px; left: -40px;
+    width: 160px; height: 160px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.04);
+}
+
+.auth-logo {
+    width: 56px; height: 56px;
+    background: rgba(255,255,255,0.15);
+    border: 2px solid rgba(255,255,255,0.25);
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem;
+    position: relative;
+    z-index: 1;
+}
+
+.auth-logo svg { width: 28px; height: 28px; fill: white; }
+
+.auth-header h1 {
+    color: white;
+    font-size: 1.5rem;
+    font-weight: 800;
+    margin: 0;
+    position: relative;
+    z-index: 1;
+}
+
+.auth-header p {
+    color: rgba(255,255,255,0.72);
+    font-size: 0.875rem;
+    margin: 0.4rem 0 0;
+    position: relative;
+    z-index: 1;
+}
+
+.auth-body { padding: 2.25rem; }
+
+.name-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.btn-full {
+    width: 100%;
+    padding: 0.85rem;
+    font-size: 0.95rem;
+    border-radius: var(--radius-sm);
+    margin-top: 0.5rem;
+    justify-content: center;
+}
+
+.auth-footer-text {
+    text-align: center;
+    margin-top: 1.5rem;
+    color: var(--text-muted);
+    font-size: 0.875rem;
+}
+
+.auth-footer-text a {
+    color: var(--indigo);
+    font-weight: 600;
+    transition: color var(--transition-fast);
+}
+
+.auth-footer-text a:hover { color: #7c9ffa; text-decoration: underline; }
+
+.section-label {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    font-weight: 700;
+    color: var(--text-muted);
+    margin: 1.5rem 0 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.section-label svg { width: 14px; height: 14px; }
+
+@media (max-width: 480px) {
+    .name-grid { grid-template-columns: 1fr; }
+    .auth-body { padding: 1.5rem; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="auth-wrapper">
+    <div class="auth-card">
+        <div class="auth-header">
+            <div class="auth-logo">
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 3L2 8l10 5 10-5-10-5z"/>
+                    <path d="M2 16l10 5 10-5" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M2 12l10 5 10-5" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" opacity="0.7"/>
+                </svg>
+            </div>
+            <h1>Create Your Account</h1>
+            <p>Join your academic workspace</p>
+        </div>
+        <div class="auth-body">
+            <form method="post" id="registerForm" novalidate>
+                {% csrf_token %}
+
+                <div class="section-label">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    Account Credentials
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.username.id_for_label }}">Username</label>
+                    <div class="input-group">
+                        {{ form.username }}
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
+                            <circle cx="12" cy="7" r="4"/>
+                        </svg>
+                    </div>
+                    <span class="error-message" id="username_error"></span>
+                    {% if form.username.errors %}
+                        <ul class="errorlist">{% for e in form.username.errors %}<li>{{ e }}</li>{% endfor %}</ul>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.email.id_for_label }}">Email Address</label>
+                    <div class="input-group">
+                        {{ form.email }}
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                            <polyline points="22,6 12,13 2,6"/>
+                        </svg>
+                    </div>
+                    <span class="error-message" id="email_error"></span>
+                    {% if form.email.errors %}
+                        <ul class="errorlist">{% for e in form.email.errors %}<li>{{ e }}</li>{% endfor %}</ul>
+                    {% endif %}
+                </div>
+
+                <div class="section-label">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                    Personal Information
+                </div>
+
+                <div class="name-grid">
+                    <div class="form-group">
+                        <label for="{{ form.first_name.id_for_label }}">First Name</label>
+                        {{ form.first_name }}
+                        <span class="error-message" id="first_name_error"></span>
+                        {% if form.first_name.errors %}
+                            <ul class="errorlist">{% for e in form.first_name.errors %}<li>{{ e }}</li>{% endfor %}</ul>
+                        {% endif %}
+                    </div>
+                    <div class="form-group">
+                        <label for="{{ form.last_name.id_for_label }}">Last Name</label>
+                        {{ form.last_name }}
+                        <span class="error-message" id="last_name_error"></span>
+                        {% if form.last_name.errors %}
+                            <ul class="errorlist">{% for e in form.last_name.errors %}<li>{{ e }}</li>{% endfor %}</ul>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.role.id_for_label }}">Role</label>
+                    {{ form.role }}
+                    <small>Select your role in the system</small>
+                    <span class="error-message" id="role_error"></span>
+                    {% if form.role.errors %}
+                        <ul class="errorlist">{% for e in form.role.errors %}<li>{{ e }}</li>{% endfor %}</ul>
+                    {% endif %}
+                </div>
+
+                <div class="section-label">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+                    Security
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.password.id_for_label }}">Password</label>
+                    <div class="input-group">
+                        {{ form.password }}
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                            <path d="M7 11V7a5 5 0 0110 0v4"/>
+                        </svg>
+                    </div>
+                    <div class="password-strength-bar" id="strengthBar" style="display:none;">
+                        <div class="password-strength-fill" id="strengthFill"></div>
+                    </div>
+                    <div class="strength-label" id="strengthLabel" style="display:none;"></div>
+                    <small>Min. 8 chars with uppercase, number &amp; special character</small>
+                    <span class="error-message" id="password_error"></span>
+                    {% if form.password.errors %}
+                        <ul class="errorlist">{% for e in form.password.errors %}<li>{{ e }}</li>{% endfor %}</ul>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.password_confirm.id_for_label }}">Confirm Password</label>
+                    <div class="input-group">
+                        {{ form.password_confirm }}
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                            <path d="M7 11V7a5 5 0 0110 0v4"/>
+                        </svg>
+                    </div>
+                    <span class="error-message" id="password_confirm_error"></span>
+                    {% if form.password_confirm.errors %}
+                        <ul class="errorlist">{% for e in form.password_confirm.errors %}<li>{{ e }}</li>{% endfor %}</ul>
+                    {% endif %}
+                </div>
+
+                {% if form.non_field_errors %}
+                    <div class="alert alert-error">{{ form.non_field_errors }}</div>
+                {% endif %}
+
+                <button type="submit" class="btn-primary btn-full">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:17px;height:17px;">
+                        <path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2"/>
+                        <circle cx="9" cy="7" r="4"/>
+                        <line x1="19" y1="8" x2="19" y2="14"/>
+                        <line x1="22" y1="11" x2="16" y2="11"/>
+                    </svg>
+                    Create Account
+                </button>
+            </form>
+
+            <div class="auth-footer-text">
+                <p>Already have an account? <a href="{% url 'accounts:login' %}">Sign in here</a></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('registerForm');
+    const fields = {
+        username: document.getElementById('id_username'),
+        email: document.getElementById('id_email'),
+        first_name: document.getElementById('id_first_name'),
+        last_name: document.getElementById('id_last_name'),
+        role: document.getElementById('id_role'),
+        password: document.getElementById('id_password'),
+        password_confirm: document.getElementById('id_password_confirm')
+    };
+    const errors = {
+        username: document.getElementById('username_error'),
+        email: document.getElementById('email_error'),
+        first_name: document.getElementById('first_name_error'),
+        last_name: document.getElementById('last_name_error'),
+        role: document.getElementById('role_error'),
+        password: document.getElementById('password_error'),
+        password_confirm: document.getElementById('password_confirm_error')
+    };
+
+    function showError(field, msg) {
+        if (errors[field]) { errors[field].textContent = msg; errors[field].style.display = 'block'; }
+        if (fields[field]) fields[field].classList.add('error');
+    }
+
+    function clearError(field) {
+        if (errors[field]) { errors[field].textContent = ''; errors[field].style.display = 'none'; }
+        if (fields[field]) fields[field].classList.remove('error');
+    }
+
+    // Password strength meter
+    const strengthBar = document.getElementById('strengthBar');
+    const strengthFill = document.getElementById('strengthFill');
+    const strengthLabel = document.getElementById('strengthLabel');
+
+    if (fields.password) {
+        fields.password.addEventListener('input', function() {
+            const val = this.value;
+            if (!val) { strengthBar.style.display = 'none'; strengthLabel.style.display = 'none'; return; }
+            strengthBar.style.display = 'block';
+            strengthLabel.style.display = 'block';
+
+            let score = 0;
+            if (val.length >= 8) score++;
+            if (/[A-Z]/.test(val)) score++;
+            if (/\d/.test(val)) score++;
+            if (/[@$!%*?&]/.test(val)) score++;
+
+            strengthBar.className = 'password-strength-bar';
+            if (score <= 1) {
+                strengthBar.classList.add('strength-weak');
+                strengthLabel.textContent = 'Weak';
+                strengthLabel.style.color = 'var(--danger)';
+            } else if (score <= 3) {
+                strengthBar.classList.add('strength-medium');
+                strengthLabel.textContent = 'Medium';
+                strengthLabel.style.color = 'var(--warning)';
+            } else {
+                strengthBar.classList.add('strength-strong');
+                strengthLabel.textContent = 'Strong';
+                strengthLabel.style.color = 'var(--success)';
+            }
+        });
+    }
+
+    form.addEventListener('submit', function(e) {
+        let isValid = true;
+        Object.keys(fields).forEach(f => clearError(f));
+
+        if (!fields.username?.value.trim()) { showError('username', 'Username is required'); isValid = false; }
+        const emailPat = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!fields.email?.value.trim()) { showError('email', 'Email is required'); isValid = false; }
+        else if (!emailPat.test(fields.email.value)) { showError('email', 'Enter a valid email address'); isValid = false; }
+        if (!fields.first_name?.value.trim()) { showError('first_name', 'First name is required'); isValid = false; }
+        else if (/\d/.test(fields.first_name.value)) { showError('first_name', 'Name cannot contain numbers'); isValid = false; }
+        if (!fields.last_name?.value.trim()) { showError('last_name', 'Last name is required'); isValid = false; }
+        else if (/\d/.test(fields.last_name.value)) { showError('last_name', 'Name cannot contain numbers'); isValid = false; }
+        if (!fields.role?.value) { showError('role', 'Please select a role'); isValid = false; }
+        if (!fields.password?.value) { showError('password', 'Password is required'); isValid = false; }
+        else {
+            const pp = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+            if (!pp.test(fields.password.value)) { showError('password', 'Password must be 8+ chars with uppercase, number & special char'); isValid = false; }
+        }
+        if (!fields.password_confirm?.value) { showError('password_confirm', 'Please confirm your password'); isValid = false; }
+        else if (fields.password?.value !== fields.password_confirm.value) { showError('password_confirm', 'Passwords do not match'); isValid = false; }
+
+        if (!isValid) e.preventDefault();
+    });
+
+    Object.keys(fields).forEach(n => {
+        if (fields[n]) {
+            fields[n].addEventListener('input', function() {
+                if (this.value.trim() || n === 'password' || n === 'password_confirm') clearError(n);
+            });
+        }
+    });
+
+    if (fields.password_confirm && fields.password) {
+        fields.password_confirm.addEventListener('input', function() {
+            if (this.value && fields.password.value && fields.password.value !== this.value) {
+                showError('password_confirm', 'Passwords do not match');
+            } else {
+                clearError('password_confirm');
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

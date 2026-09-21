@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Acadex{% endblock %}</title>
+    <meta name="description" content="Acadex — a clear, focused academic management workspace.">
+    {% load static %}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="container">
+            <div class="navbar-brand">
+                <a href="{% url 'home' %}">
+                    <div class="logo-icon">
+                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 3L2 8l10 5 10-5-10-5z" fill="white"/>
+                            <path d="M2 16l10 5 10-5" stroke="white" stroke-width="2" stroke-linecap="round"/>
+                            <path d="M2 12l10 5 10-5" stroke="white" stroke-width="2" stroke-linecap="round" opacity="0.7"/>
+                        </svg>
+                    </div>
+                    Acadex
+                </a>
+            </div>
+            <div class="navbar-menu">
+                {% if user.is_authenticated %}
+                    <a href="{% url 'dashboard' %}" id="nav-dashboard">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="3" width="7" height="7" rx="1"/>
+                            <rect x="14" y="3" width="7" height="7" rx="1"/>
+                            <rect x="3" y="14" width="7" height="7" rx="1"/>
+                            <rect x="14" y="14" width="7" height="7" rx="1"/>
+                        </svg>
+                        Dashboard
+                    </a>
+                    {% if user.is_instructor %}
+                        <a href="{% url 'courses:subject_list' %}" id="nav-subjects">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M4 19.5A2.5 2.5 0 016.5 17H20"/>
+                                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/>
+                            </svg>
+                            Subjects
+                        </a>
+                        <a href="{% url 'announcements:my_announcements' %}" id="nav-announcements">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                                <path d="M13.73 21a2 2 0 01-3.46 0"/>
+                            </svg>
+                            Announcements
+                        </a>
+                    {% elif user.is_student %}
+                        <a href="{% url 'courses:subject_list' %}" id="nav-subjects">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M4 19.5A2.5 2.5 0 016.5 17H20"/>
+                                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/>
+                            </svg>
+                            Subjects
+                        </a>
+                        <a href="{% url 'accounts:view_all_grades' %}" id="nav-grades">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                            </svg>
+                            Grades
+                        </a>
+                        <a href="{% url 'accounts:view_all_announcements' %}" id="nav-announcements">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                                <path d="M13.73 21a2 2 0 01-3.46 0"/>
+                            </svg>
+                            Announcements
+                        </a>
+                    {% endif %}
+
+                    <div class="navbar-user">
+                        <div class="profile-dropdown">
+                            <div class="profile-trigger" onclick="toggleDropdown()" id="profileTrigger">
+                                {% if user.profile_picture %}
+                                    <img src="{{ user.profile_picture.url }}" alt="Profile" class="profile-avatar">
+                                {% else %}
+                                    <div class="profile-avatar-initials">
+                                        {% if user.first_name and user.last_name %}
+                                            {{ user.first_name.0|upper }}{{ user.last_name.0|upper }}
+                                        {% else %}
+                                            {{ user.username.0|upper }}
+                                        {% endif %}
+                                    </div>
+                                {% endif %}
+                                <span class="profile-trigger-name">{{ user.first_name|default:user.username }}</span>
+                                <svg class="profile-trigger-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                    <polyline points="6 9 12 15 18 9"/>
+                                </svg>
+                            </div>
+                            <div class="dropdown-menu" id="profileDropdown">
+                                <div class="dropdown-header">
+                                    <strong>{{ user.get_full_name|default:user.username }}</strong>
+                                    <span class="badge {% if user.is_student %}badge-student{% elif user.is_instructor %}badge-instructor{% else %}badge-admin{% endif %}">
+                                        {{ user.get_role_display }}
+                                    </span>
+                                </div>
+                                <a href="{% url 'accounts:profile' %}" class="dropdown-item">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
+                                        <circle cx="12" cy="7" r="4"/>
+                                    </svg>
+                                    My Profile
+                                </a>
+                                <div class="dropdown-divider"></div>
+                                <button class="dropdown-item" onclick="showLogoutModal(event)" style="text-align:left;">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/>
+                                        <polyline points="16 17 21 12 16 7"/>
+                                        <line x1="21" y1="12" x2="9" y2="12"/>
+                                    </svg>
+                                    Sign Out
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                {% else %}
+                    <a href="{% url 'accounts:login' %}">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4"/>
+                            <polyline points="10 17 15 12 10 7"/>
+                            <line x1="15" y1="12" x2="3" y2="12"/>
+                        </svg>
+                        Login
+                    </a>
+                    <a href="{% url 'accounts:register' %}" class="btn-primary" style="padding: 0.5rem 1.1rem;">
+                        Get Started
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <!-- Messages -->
+    {% if messages %}
+        <div class="container" style="margin-top: 1rem; position: relative; z-index: 1;">
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}">
+                    {% if message.tags == 'success' %}
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                    {% elif message.tags == 'error' or message.tags == 'danger' %}
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                    {% elif message.tags == 'warning' %}
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                    {% else %}
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                    {% endif %}
+                    <span>{{ message }}</span>
+                    <button class="alert-close" onclick="this.parentElement.style.display='none'">×</button>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="container">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p>© 2026 Acadex. Academic progress, made clear.</p>
+        </div>
+    </footer>
+
+    {% block extra_js %}{% endblock %}
+
+    <!-- Logout Modal -->
+    <div class="modal-overlay" id="logoutModal" onclick="handleModalClick(event)">
+        <div class="modal-box">
+            <div class="modal-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/>
+                    <polyline points="16 17 21 12 16 7"/>
+                    <line x1="21" y1="12" x2="9" y2="12"/>
+                </svg>
+            </div>
+            <h3>Sign Out?</h3>
+            <p>Are you sure you want to sign out of your Acadex account?</p>
+            <div class="modal-actions">
+                <a href="{% url 'accounts:logout' %}" class="btn-danger" style="padding: 0.65rem 1.75rem;">Yes, Sign Out</a>
+                <button onclick="hideLogoutModal()" class="btn-secondary" style="padding: 0.65rem 1.75rem;">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Dropdown
+        function toggleDropdown() {
+            const trigger = document.getElementById('profileTrigger');
+            const dropdown = document.getElementById('profileDropdown');
+            dropdown.classList.toggle('show');
+            trigger.classList.toggle('open');
+        }
+
+        // Logout modal
+        function showLogoutModal(e) {
+            e.preventDefault();
+            document.getElementById('logoutModal').style.display = 'flex';
+        }
+        function hideLogoutModal() {
+            document.getElementById('logoutModal').style.display = 'none';
+        }
+        function handleModalClick(e) {
+            if (e.target === document.getElementById('logoutModal')) hideLogoutModal();
+        }
+
+        // Close dropdown on outside click
+        window.addEventListener('click', function(e) {
+            const trigger = document.getElementById('profileTrigger');
+            const dropdown = document.getElementById('profileDropdown');
+            if (trigger && dropdown && !trigger.contains(e.target)) {
+                dropdown.classList.remove('show');
+                trigger.classList.remove('open');
+            }
+        });
+
+        // Active nav link detection
+        (function() {
+            const path = window.location.pathname;
+            const links = document.querySelectorAll('.navbar-menu > a');
+            links.forEach(link => {
+                const href = link.getAttribute('href');
+                if (href && path.startsWith(href) && href !== '/') {
+                    link.classList.add('active');
+                } else if (href === '/' && path === '/') {
+                    link.classList.add('active');
+                }
+            });
+        })();
+    </script>
+</body>
+</html>

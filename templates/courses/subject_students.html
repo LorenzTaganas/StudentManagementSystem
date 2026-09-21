@@ -1,0 +1,187 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ subject.code }} — Students — Acadex{% endblock %}
+
+{% block content %}
+<a href="{% url 'accounts:dashboard' %}" class="back-link">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+    Back to Dashboard
+</a>
+
+<div class="subject-header">
+    <div style="position:relative; z-index:1;">
+        <h1 style="margin:0; font-size:1.8rem; font-weight:800;">{{ subject.code }} — {{ subject.name }}</h1>
+        <div class="subject-info">
+            <div class="subject-info-item">
+                <span class="subject-info-label">Course</span>
+                <span class="subject-info-value">{{ subject.course.code }}</span>
+            </div>
+            <div class="subject-info-item">
+                <span class="subject-info-label">Units</span>
+                <span class="subject-info-value">{{ subject.units }}</span>
+            </div>
+            <div class="subject-info-item">
+                <span class="subject-info-label">Year Level</span>
+                <span class="subject-info-value">Year {{ subject.year_level }}</span>
+            </div>
+            <div class="subject-info-item">
+                <span class="subject-info-label">Semester</span>
+                <span class="subject-info-value">{{ subject.get_semester_display }}</span>
+            </div>
+            <div class="subject-info-item">
+                <span class="subject-info-label">Total Students</span>
+                <span class="subject-info-value" style="color:#34d399;">{{ total_students }}</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h2>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
+                <circle cx="9" cy="7" r="4"/>
+                <path d="M23 21v-2a4 4 0 00-3-3.87"/>
+                <path d="M16 3.13a4 4 0 010 7.75"/>
+            </svg>
+            Enrolled Students &amp; Grades
+        </h2>
+    </div>
+    <div class="card-body">
+        {% if students_data %}
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Student</th>
+                            <th>Student ID</th>
+                            <th class="hide-mobile">Year</th>
+                            <th class="grade-cell">Prelim<br><small style="font-weight:400;text-transform:none;letter-spacing:0;">{{ students_data.0.grade.prelim_weight }}%</small></th>
+                            <th class="grade-cell">Midterm<br><small style="font-weight:400;text-transform:none;letter-spacing:0;">{{ students_data.0.grade.midterm_weight }}%</small></th>
+                            <th class="grade-cell">Final<br><small style="font-weight:400;text-transform:none;letter-spacing:0;">{{ students_data.0.grade.final_weight }}%</small></th>
+                            <th class="grade-cell">Avg</th>
+                            <th class="grade-cell">Grade</th>
+                            <th class="grade-cell">Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for data in students_data %}
+                        <tr>
+                            <td>
+                                <div class="student-info">
+                                    {% if data.student.profile_picture %}
+                                        <img src="{{ data.student.profile_picture.url }}" alt="{{ data.student.get_full_name }}" class="student-avatar">
+                                    {% else %}
+                                        <div class="student-avatar">
+                                            {{ data.student.first_name.0|upper }}{{ data.student.last_name.0|upper }}
+                                        </div>
+                                    {% endif %}
+                                    <div class="student-details">
+                                        <span class="student-name">{{ data.student.get_full_name }}</span>
+                                        <span class="student-id">@{{ data.student.username }}</span>
+                                    </div>
+                                </div>
+                            </td>
+                            <td><code style="font-size:0.82rem; color:var(--text-secondary);">{{ data.student_profile.student_id|default:"—" }}</code></td>
+                            <td class="hide-mobile"><span class="type-badge" style="background:rgba(79,110,247,0.1);color:var(--indigo);border:1px solid rgba(79,110,247,0.2);">Yr {{ data.student_profile.year_level|default:"—" }}</span></td>
+                            <td class="grade-cell">
+                                {% if data.grade.prelim_grade %}{{ data.grade.prelim_grade }}{% else %}<span style="color:var(--text-muted);">—</span>{% endif %}
+                            </td>
+                            <td class="grade-cell">
+                                {% if data.grade.midterm_grade %}{{ data.grade.midterm_grade }}{% else %}<span style="color:var(--text-muted);">—</span>{% endif %}
+                            </td>
+                            <td class="grade-cell">
+                                {% if data.grade.final_grade %}{{ data.grade.final_grade }}{% else %}<span style="color:var(--text-muted);">—</span>{% endif %}
+                            </td>
+                            <td class="grade-cell">
+                                {% if data.grade.weighted_average %}
+                                    <span class="weighted-avg">{{ data.grade.weighted_average }}</span>
+                                {% else %}
+                                    <span style="color:var(--text-muted);">—</span>
+                                {% endif %}
+                            </td>
+                            <td class="grade-cell">
+                                {% if data.grade.letter_grade %}
+                                    <span class="letter-grade">{{ data.grade.letter_grade }}</span>
+                                {% else %}
+                                    <span style="color:var(--text-muted);">—</span>
+                                {% endif %}
+                            </td>
+                            <td class="grade-cell">
+                                {% if data.grade.weighted_average %}
+                                    {% if data.grade.letter_grade != '5.00' %}
+                                        <span class="grade-status grade-passed">Passed</span>
+                                    {% else %}
+                                        <span class="grade-status grade-failed">Failed</span>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="grade-status grade-incomplete">Incomplete</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{% url 'grades:edit_grade' data.grade.id %}" class="action-btn btn-edit">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
+                                        <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                                    </svg>
+                                    Edit
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <div class="empty-icon">👥</div>
+                <h3>No Students Enrolled</h3>
+                <p>There are currently no students enrolled in this subject.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+{% if students_data %}
+<div class="card">
+    <div class="card-header">
+        <h2>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            Grading System
+        </h2>
+    </div>
+    <div class="card-body">
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:2rem;">
+            <div>
+                <h3 style="margin-bottom:1rem; color:var(--text-secondary); font-size:0.82rem; text-transform:uppercase; letter-spacing:0.6px; font-weight:700;">Grade Weights</h3>
+                <table>
+                    <tr><td style="color:var(--text-secondary);">Prelim:</td><td style="text-align:right; font-weight:700; color:var(--indigo);">{{ students_data.0.grade.prelim_weight }}%</td></tr>
+                    <tr><td style="color:var(--text-secondary);">Midterm:</td><td style="text-align:right; font-weight:700; color:var(--indigo);">{{ students_data.0.grade.midterm_weight }}%</td></tr>
+                    <tr><td style="color:var(--text-secondary);">Final:</td><td style="text-align:right; font-weight:700; color:var(--indigo);">{{ students_data.0.grade.final_weight }}%</td></tr>
+                    <tr style="border-top:2px solid var(--border-hover);"><td style="color:var(--text-secondary);font-weight:700;">Total:</td><td style="text-align:right; font-weight:800; color:var(--text-white);">100%</td></tr>
+                </table>
+            </div>
+            <div>
+                <h3 style="margin-bottom:1rem; color:var(--text-secondary); font-size:0.82rem; text-transform:uppercase; letter-spacing:0.6px; font-weight:700;">Grading Scale</h3>
+                <table class="grade-scale-table" style="font-size:0.83rem;">
+                    <tr><td>97–100</td><td style="text-align:right; font-weight:700; color:#34d399;">1.00</td></tr>
+                    <tr><td>94–96</td><td style="text-align:right; font-weight:700;">1.25</td></tr>
+                    <tr><td>91–93</td><td style="text-align:right; font-weight:700;">1.50</td></tr>
+                    <tr><td>88–90</td><td style="text-align:right; font-weight:700;">1.75</td></tr>
+                    <tr><td>85–87</td><td style="text-align:right; font-weight:700;">2.00</td></tr>
+                    <tr><td>82–84</td><td style="text-align:right; font-weight:700;">2.25</td></tr>
+                    <tr><td>79–81</td><td style="text-align:right; font-weight:700;">2.50</td></tr>
+                    <tr><td>76–78</td><td style="text-align:right; font-weight:700;">2.75</td></tr>
+                    <tr><td>75</td><td style="text-align:right; font-weight:700; color:#34d399;">3.00 (Passing)</td></tr>
+                    <tr><td style="color:var(--danger);">Below 75</td><td style="text-align:right; font-weight:700; color:var(--danger);">5.00 (Failed)</td></tr>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
